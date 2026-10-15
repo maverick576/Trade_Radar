@@ -16,7 +16,11 @@ export const JournalBreakdowns: React.FC<JournalBreakdownsProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<TabType>("symbol");
 
-  const tabs: Array<{ id: TabType; label: string; icon: React.FC<{ className?: string }> }> = [
+  const tabs: Array<{
+    id: TabType;
+    label: string;
+    icon: React.FC<{ className?: string }>;
+  }> = [
     { id: "symbol", label: "Per Simbol", icon: Layers },
     { id: "strategy", label: "Per Strategi", icon: PieChart },
     { id: "session", label: "Per Sesi Pasar", icon: Clock },
@@ -79,7 +83,7 @@ export const JournalBreakdowns: React.FC<JournalBreakdownsProps> = ({
               <tr className="border-b border-border/60 text-muted font-mono">
                 <th className="py-2.5 px-3 font-medium">Kategori</th>
                 <th className="py-2.5 px-3 font-medium text-center">Total Trade</th>
-                <th className="py-2.5 px-3 font-medium text-center">W / L / BE</th>
+                <th className="py-2.5 px-3 font-medium text-center">W / L</th>
                 <th className="py-2.5 px-3 font-medium text-right">Winrate</th>
                 <th className="py-2.5 px-3 font-medium text-right">Net R</th>
                 <th className="py-2.5 px-3 font-medium text-right">Profit Factor</th>
@@ -90,8 +94,9 @@ export const JournalBreakdowns: React.FC<JournalBreakdownsProps> = ({
             <tbody className="divide-y divide-border/30 font-mono">
               {currentItems.map((item, idx) => {
                 const isPnlPositive = item.total_pnl_usd >= 0;
-                const isRPositive = item.total_r >= 0;
+                const isRPositive = item.total_pnl_r >= 0;
                 const isExpPositive = item.expectancy_r >= 0;
+                const pf = item.profit_factor ?? 0;
 
                 return (
                   <tr key={idx} className="hover:bg-surface-hover/50 transition-colors">
@@ -100,11 +105,10 @@ export const JournalBreakdowns: React.FC<JournalBreakdownsProps> = ({
                         {item.category || "-"}
                       </span>
                     </td>
-                    <td className="py-2.5 px-3 text-center text-fg">{item.trades}</td>
+                    <td className="py-2.5 px-3 text-center text-fg">{item.total_trades}</td>
                     <td className="py-2.5 px-3 text-center text-muted">
-                      <span className="text-emerald-400 font-semibold">{item.wins}</span> /{" "}
-                      <span className="text-rose-400 font-semibold">{item.losses}</span> /{" "}
-                      <span>{item.breakevens}</span>
+                      <span className="text-emerald-400 font-semibold">{item.win_trades}</span> /{" "}
+                      <span className="text-rose-400 font-semibold">{item.loss_trades}</span>
                     </td>
                     <td className="py-2.5 px-3 text-right">
                       <div className="flex items-center justify-end gap-2">
@@ -125,10 +129,10 @@ export const JournalBreakdowns: React.FC<JournalBreakdownsProps> = ({
                       }`}
                     >
                       {isRPositive ? "+" : ""}
-                      {formatIdNumber(item.total_r, 2)} R
+                      {formatIdNumber(item.total_pnl_r, 2)} R
                     </td>
                     <td className="py-2.5 px-3 text-right text-fg">
-                      {item.profit_factor >= 999 ? "∞" : formatIdNumber(item.profit_factor, 2)}
+                      {pf >= 999 ? "∞" : formatIdNumber(pf, 2)}
                     </td>
                     <td
                       className={`py-2.5 px-3 text-right ${

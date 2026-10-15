@@ -1,20 +1,12 @@
 import React, { useState, useEffect, useCallback } from "react";
-import {
-  Download,
-  RefreshCw,
-  BookOpen,
-  AlertTriangle,
-} from "lucide-react";
+import { BookOpen, AlertTriangle } from "lucide-react";
 import {
   api,
   type JournalResponse,
   type JournalBookType,
 } from "../api/client";
 import { JournalBookToggle } from "../features/journal/JournalBookToggle";
-import {
-  JournalFilterBar,
-  type JournalFilters,
-} from "../features/journal/JournalFilterBar";
+import { JournalFilterBar } from "../features/journal/JournalFilterBar";
 import { JournalKpiGrid } from "../features/journal/JournalKpiGrid";
 import { JournalEquityCurve } from "../features/journal/JournalEquityCurve";
 import { JournalRDistribution } from "../features/journal/JournalRDistribution";
@@ -28,17 +20,15 @@ import { TradeSnapshotModal } from "../features/journal/TradeSnapshotModal";
 
 export const JurnalPage: React.FC = () => {
   const [book, setBook] = useState<JournalBookType>("paper");
-  const [filters, setFilters] = useState<JournalFilters>({
-    datePreset: "ALL",
-    symbol: "",
-    strategy: "",
-  });
+  const [range, setRange] = useState<string>("all");
+  const [selectedSymbol, setSelectedSymbol] = useState<string>("");
+  const [selectedStrategy, setSelectedStrategy] = useState<string>("");
 
   const [data, setData] = useState<JournalResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [exporting, setExporting] = useState<boolean>(false);
-  const [selectedTradeId, setSelectedTradeId] = useState<string | null>(null);
+  const [selectedTradeId, setSelectedTradeId] = useState<number | null>(null);
 
   const fetchStats = useCallback(async () => {
     setLoading(true);
@@ -46,18 +36,19 @@ export const JurnalPage: React.FC = () => {
     try {
       const res = await api.getJournalStats({
         book,
-        symbol: filters.symbol || undefined,
-        strategy: filters.strategy || undefined,
-        date_from: filters.dateFrom || undefined,
-        date_to: filters.dateTo || undefined,
+        range_str: range,
+        symbol: selectedSymbol || undefined,
+        strategy: selectedStrategy || undefined,
       });
       setData(res);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Gagal memuat statistik jurnal");
+      setError(
+        err instanceof Error ? err.message : "Gagal memuat statistik jurnal"
+      );
     } finally {
       setLoading(false);
     }
-  }, [book, filters]);
+  }, [book, range, selectedSymbol, selectedStrategy]);
 
   useEffect(() => {
     fetchStats();
@@ -68,13 +59,15 @@ export const JurnalPage: React.FC = () => {
     try {
       await api.exportJournalCsv({
         book,
-        symbol: filters.symbol || undefined,
-        strategy: filters.strategy || undefined,
-        date_from: filters.dateFrom || undefined,
-        date_to: filters.dateTo || undefined,
+        range_str: range,
+        symbol: selectedSymbol || undefined,
+        strategy: selectedStrategy || undefined,
       });
     } catch (err: unknown) {
-      alert("Gagal mengekspor CSV: " + (err instanceof Error ? err.message : "Terjadi kesalahan"));
+      alert(
+        "Gagal mengekspor CSV: " +
+          (err instanceof Error ? err.message : "Terjadi kesalahan")
+      );
     } finally {
       setExporting(false);
     }
@@ -98,30 +91,9 @@ export const JurnalPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Top Controls: Book Toggle & CSV Export */}
+        {/* Top Controls: Book Toggle */}
         <div className="flex flex-wrap items-center gap-3">
           <JournalBookToggle value={book} onChange={setBook} />
-
-          <button
-            type="button"
-            onClick={handleExportCsv}
-            disabled={exporting || loading}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-surface border border-border text-xs font-medium text-fg hover:bg-surface-hover hover:border-accent/40 disabled:opacity-50 transition-all shadow-sm"
-            title="Ekspor CSV RFC 4180 dengan BOM UTF-8"
-          >
-            <Download className={`w-4 h-4 ${exporting ? "animate-bounce" : "text-accent"}`} />
-            <span>{exporting ? "Mengekspor..." : "Ekspor CSV"}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={fetchStats}
-            disabled={loading}
-            className="p-2 rounded-xl bg-surface border border-border text-muted hover:text-fg hover:bg-surface-hover transition-colors"
-            title="Segarkan data"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin text-accent" : ""}`} />
-          </button>
         </div>
       </div>
 
@@ -142,13 +114,28 @@ export const JurnalPage: React.FC = () => {
         </div>
       )}
 
-      {/* Filter Bar */}
-      <JournalFilterBar filters={filters} onFilterChange={setFilters} />
+      {/* Filter Bar with presets, symbol, strategy, and CSV export */}
+      <JournalFilterBar
+        range={range}
+        onSelectRange={setRange}
+        selectedSymbol={selectedSymbol}
+        onSelectSymbol={setSelectedSymbol}
+        selectedStrategy={selectedStrategy}
+        onSelectStrategy={setSelectedStrategy}
+        onRefresh={fetchStats}
+        onExportCsv={handleExportCsv}
+        isExporting={exporting}
+        isLoading={loading}
+      />
 
       {/* Primary KPI Grid */}
       <JournalKpiGrid
         kpis={data?.kpis || null}
-        compareKpis={data?.compare_kpis || null}
+        compareKpis={
+          book === "compare"
+            ? data?.compare_real_kpis || null
+            : null
+        }
         book={book}
         isLoading={loading}
       />
@@ -158,7 +145,6 @@ export const JurnalPage: React.FC = () => {
         <div className="lg:col-span-2">
           <JournalEquityCurve
             data={data?.equity_curve || []}
-            compareData={data?.compare_equity_curve || []}
             book={book}
             isLoading={loading}
           />

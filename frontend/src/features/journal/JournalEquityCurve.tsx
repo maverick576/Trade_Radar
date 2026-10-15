@@ -42,12 +42,16 @@ export const JournalEquityCurve: React.FC<JournalEquityCurveProps> = ({
   // Prepend baseline origin point at trade 0 (0 R, 0 USD)
   const chartData = [
     {
-      trade_number: 0,
-      timestamp: data[0]?.timestamp || "",
-      equity_r: 0,
-      equity_usd: 0,
+      trade_id: 0,
+      time: data[0]?.time || "",
+      time_wib: data[0]?.time_wib || "",
+      symbol: "",
+      side: "",
+      pnl_r: 0,
+      pnl_usd: 0,
+      cumulative_r: 0,
+      cumulative_usd: 0,
       drawdown_r: 0,
-      drawdown_pct: 0,
     },
     ...data,
   ];
@@ -56,19 +60,23 @@ export const JournalEquityCurve: React.FC<JournalEquityCurveProps> = ({
     compareData && compareData.length > 0
       ? [
           {
-            trade_number: 0,
-            timestamp: compareData[0]?.timestamp || "",
-            equity_r: 0,
-            equity_usd: 0,
+            trade_id: 0,
+            time: compareData[0]?.time || "",
+            time_wib: compareData[0]?.time_wib || "",
+            symbol: "",
+            side: "",
+            pnl_r: 0,
+            pnl_usd: 0,
+            cumulative_r: 0,
+            cumulative_usd: 0,
             drawdown_r: 0,
-            drawdown_pct: 0,
           },
           ...compareData,
         ]
       : [];
 
-  const getValue = (pt: EquityPoint | typeof chartData[0]) =>
-    metric === "r" ? pt.equity_r : pt.equity_usd;
+  const getValue = (pt: EquityPoint | (typeof chartData)[0]) =>
+    metric === "r" ? pt.cumulative_r : pt.cumulative_usd;
 
   // Find min/max for scaling
   const allValues = [
@@ -103,14 +111,18 @@ export const JournalEquityCurve: React.FC<JournalEquityCurveProps> = ({
   );
 
   const getX = (tradeNum: number) => padLeft + (tradeNum / maxTrades) * chartW;
-  const getY = (val: number) => padTop + chartH - ((val - yMin) / (yMax - yMin)) * chartH;
+  const getY = (val: number) =>
+    padTop + chartH - ((val - yMin) / (yMax - yMin)) * chartH;
   const zeroY = getY(0);
 
   // Build SVG path
-  const buildPath = (pts: Array<typeof chartData[0]>) => {
+  const buildPath = (pts: Array<(typeof chartData)[0]>) => {
     if (pts.length === 0) return "";
     return pts
-      .map((pt, i) => `${i === 0 ? "M" : "L"} ${getX(pt.trade_number).toFixed(1)} ${getY(getValue(pt)).toFixed(1)}`)
+      .map(
+        (pt, i) =>
+          `${i === 0 ? "M" : "L"} ${getX(i).toFixed(1)} ${getY(getValue(pt)).toFixed(1)}`
+      )
       .join(" ");
   };
 
@@ -120,13 +132,13 @@ export const JournalEquityCurve: React.FC<JournalEquityCurveProps> = ({
   // Gradient area path for primary
   const areaPath =
     chartData.length > 0
-      ? `${primaryPath} L ${getX(chartData[chartData.length - 1].trade_number).toFixed(1)} ${zeroY.toFixed(1)} L ${getX(0).toFixed(1)} ${zeroY.toFixed(1)} Z`
+      ? `${primaryPath} L ${getX(chartData.length - 1).toFixed(1)} ${zeroY.toFixed(1)} L ${getX(0).toFixed(1)} ${zeroY.toFixed(1)} Z`
       : "";
 
   const latestPt = data[data.length - 1];
   const compareLatestPt = compareData[compareData.length - 1];
-
-  const hoveredPt = hoverIndex !== null && hoverIndex < data.length ? data[hoverIndex] : null;
+  const hoveredPt =
+    hoverIndex !== null && hoverIndex < data.length ? data[hoverIndex] : null;
 
   return (
     <div className="p-5 rounded-2xl bg-surface border border-border shadow-sm flex flex-col gap-4">
@@ -192,13 +204,13 @@ export const JournalEquityCurve: React.FC<JournalEquityCurveProps> = ({
           <span className="text-muted">Total Return: </span>
           <span
             className={`font-bold ${
-              latestPt.equity_r >= 0 ? "text-emerald-400" : "text-rose-400"
+              latestPt.cumulative_r >= 0 ? "text-emerald-400" : "text-rose-400"
             }`}
           >
-            {latestPt.equity_r >= 0 ? "+" : ""}
+            {latestPt.cumulative_r >= 0 ? "+" : ""}
             {metric === "r"
-              ? `${formatIdNumber(latestPt.equity_r, 2)} R`
-              : `$${formatIdNumber(latestPt.equity_usd, 2)}`}
+              ? `${formatIdNumber(latestPt.cumulative_r, 2)} R`
+              : `$${formatIdNumber(latestPt.cumulative_usd, 2)}`}
           </span>
         </div>
 
@@ -207,13 +219,13 @@ export const JournalEquityCurve: React.FC<JournalEquityCurveProps> = ({
             <span className="text-muted">Real Return: </span>
             <span
               className={`font-bold ${
-                compareLatestPt.equity_r >= 0 ? "text-emerald-400" : "text-rose-400"
+                compareLatestPt.cumulative_r >= 0 ? "text-emerald-400" : "text-rose-400"
               }`}
             >
-              {compareLatestPt.equity_r >= 0 ? "+" : ""}
+              {compareLatestPt.cumulative_r >= 0 ? "+" : ""}
               {metric === "r"
-                ? `${formatIdNumber(compareLatestPt.equity_r, 2)} R`
-                : `$${formatIdNumber(compareLatestPt.equity_usd, 2)}`}
+                ? `${formatIdNumber(compareLatestPt.cumulative_r, 2)} R`
+                : `$${formatIdNumber(compareLatestPt.cumulative_usd, 2)}`}
             </span>
           </div>
         )}
@@ -221,7 +233,7 @@ export const JournalEquityCurve: React.FC<JournalEquityCurveProps> = ({
         <div>
           <span className="text-muted">Max Drawdown: </span>
           <span className="text-amber-400 font-semibold">
-            -{formatIdNumber(latestPt.drawdown_r, 2)} R (-{formatIdNumber(latestPt.drawdown_pct, 1)}%)
+            -{formatIdNumber(latestPt.drawdown_r, 2)} R
           </span>
         </div>
       </div>
@@ -281,9 +293,7 @@ export const JournalEquityCurve: React.FC<JournalEquityCurveProps> = ({
           )}
 
           {/* Area fill */}
-          {book !== "compare" && (
-            <path d={areaPath} fill="url(#eqAreaGrad)" />
-          )}
+          {book !== "compare" && <path d={areaPath} fill="url(#eqAreaGrad)" />}
 
           {/* Primary curve */}
           <path
@@ -309,7 +319,7 @@ export const JournalEquityCurve: React.FC<JournalEquityCurveProps> = ({
 
           {/* Interactive hover points */}
           {chartData.slice(1).map((pt, idx) => {
-            const cx = getX(pt.trade_number);
+            const cx = getX(idx + 1);
             const cy = getY(getValue(pt));
             const isHovered = hoverIndex === idx;
 
@@ -345,27 +355,19 @@ export const JournalEquityCurve: React.FC<JournalEquityCurveProps> = ({
         {hoveredPt && (
           <div className="absolute top-2 right-4 bg-slate-900/90 backdrop-blur-md border border-slate-700 p-2.5 rounded-lg shadow-xl text-xs font-mono z-10 pointer-events-none">
             <div className="text-muted text-[11px] mb-1">
-              Trade #{hoveredPt.trade_number} ·{" "}
-              {hoveredPt.timestamp
-                ? new Date(hoveredPt.timestamp).toLocaleString("id-ID", {
-                    timeZone: "Asia/Jakarta",
-                    day: "2-digit",
-                    month: "short",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })
-                : "-"}
+              Trade #{hoveredPt.trade_id} · {hoveredPt.time_wib || hoveredPt.time || "-"}
             </div>
             <div className="flex items-center gap-3">
               <div>
                 <span className="text-muted">Kumulatif: </span>
                 <span
                   className={`font-bold ${
-                    hoveredPt.equity_r >= 0 ? "text-emerald-400" : "text-rose-400"
+                    hoveredPt.cumulative_r >= 0 ? "text-emerald-400" : "text-rose-400"
                   }`}
                 >
-                  {hoveredPt.equity_r >= 0 ? "+" : ""}
-                  {formatIdNumber(hoveredPt.equity_r, 2)} R (${formatIdNumber(hoveredPt.equity_usd, 2)})
+                  {hoveredPt.cumulative_r >= 0 ? "+" : ""}
+                  {formatIdNumber(hoveredPt.cumulative_r, 2)} R ($
+                  {formatIdNumber(hoveredPt.cumulative_usd, 2)})
                 </span>
               </div>
               <div>

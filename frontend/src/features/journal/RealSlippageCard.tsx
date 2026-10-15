@@ -20,7 +20,7 @@ export const RealSlippageCard: React.FC<RealSlippageCardProps> = ({
     );
   }
 
-  if (!metrics || metrics.total_real_trades === 0) {
+  if (!metrics || metrics.total_executions === 0) {
     return (
       <div className="p-6 rounded-2xl bg-surface border border-border flex flex-col items-center justify-center h-48 text-center">
         <Zap className="w-9 h-9 text-muted/50 mb-2" />
@@ -32,8 +32,8 @@ export const RealSlippageCard: React.FC<RealSlippageCardProps> = ({
     );
   }
 
-  const brokerEntries = Object.entries(metrics.breakdown_by_broker || {});
-  const symbolEntries = Object.entries(metrics.breakdown_by_symbol || {});
+  const brokerEntries = metrics.by_broker || [];
+  const symbolEntries = metrics.by_symbol || [];
 
   return (
     <div className="p-5 rounded-2xl bg-surface border border-border shadow-sm flex flex-col gap-4">
@@ -46,7 +46,7 @@ export const RealSlippageCard: React.FC<RealSlippageCardProps> = ({
           <div>
             <h3 className="text-sm font-semibold text-fg">Analisis Slippage Eksekusi Nyata</h3>
             <p className="text-xs text-muted">
-              Deviasi harga fill aktual terhadap sinyal ticket ({metrics.total_real_trades} trade real)
+              Deviasi harga fill aktual terhadap sinyal ticket ({metrics.total_executions} trade real)
             </p>
           </div>
         </div>
@@ -87,18 +87,18 @@ export const RealSlippageCard: React.FC<RealSlippageCardProps> = ({
             <div className="text-xs text-muted py-2">Tidak ada data broker</div>
           ) : (
             <div className="flex flex-col divide-y divide-border/30 font-mono text-xs">
-              {brokerEntries.map(([broker, data]) => (
-                <div key={broker} className="py-2 flex items-center justify-between">
+              {brokerEntries.map((b) => (
+                <div key={b.broker_profile} className="py-2 flex items-center justify-between">
                   <div>
-                    <span className="font-semibold text-fg">{broker}</span>
-                    <span className="text-[10px] text-muted ml-2">({data.count} fill)</span>
+                    <span className="font-semibold text-fg">{b.broker_profile}</span>
+                    <span className="text-[10px] text-muted ml-2">({b.total_executions} fill)</span>
                   </div>
                   <div className="text-right">
                     <span className="text-amber-400 font-medium">
-                      {formatIdNumber(data.avg_points, 2)} pt
+                      {formatIdNumber(b.avg_slippage_points, 2)} pt
                     </span>
                     <span className="text-rose-400 font-semibold ml-2">
-                      (${formatIdNumber(data.cost_usd, 2)})
+                      (${formatIdNumber(b.total_slippage_cost_usd, 2)})
                     </span>
                   </div>
                 </div>
@@ -118,18 +118,18 @@ export const RealSlippageCard: React.FC<RealSlippageCardProps> = ({
             <div className="text-xs text-muted py-2">Tidak ada data simbol</div>
           ) : (
             <div className="flex flex-col divide-y divide-border/30 font-mono text-xs">
-              {symbolEntries.map(([sym, data]) => (
-                <div key={sym} className="py-2 flex items-center justify-between">
+              {symbolEntries.map((s) => (
+                <div key={s.symbol} className="py-2 flex items-center justify-between">
                   <div>
-                    <span className="font-semibold text-fg">{sym}</span>
-                    <span className="text-[10px] text-muted ml-2">({data.count} fill)</span>
+                    <span className="font-semibold text-fg">{s.symbol}</span>
+                    <span className="text-[10px] text-muted ml-2">({s.total_executions} fill)</span>
                   </div>
                   <div className="text-right">
                     <span className="text-amber-400 font-medium">
-                      {formatIdNumber(data.avg_points, 2)} pt
+                      {formatIdNumber(s.avg_slippage_points, 2)} pt
                     </span>
                     <span className="text-rose-400 font-semibold ml-2">
-                      (${formatIdNumber(data.cost_usd, 2)})
+                      (${formatIdNumber(s.total_slippage_cost_usd, 2)})
                     </span>
                   </div>
                 </div>

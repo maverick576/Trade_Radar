@@ -39,8 +39,9 @@ export const JournalKpiGrid: React.FC<JournalKpiGridProps> = ({
   }
 
   const isWinratePositive = kpis.winrate_pct >= 50;
-  const isPnlPositive = kpis.total_realized_pnl_usd >= 0;
+  const isPnlPositive = kpis.total_pnl_usd >= 0;
   const isExpectancyPositive = kpis.expectancy_r >= 0;
+  const profitFactor = kpis.profit_factor ?? 0;
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
@@ -57,7 +58,7 @@ export const JournalKpiGrid: React.FC<JournalKpiGridProps> = ({
             </span>
           </div>
           <div className="text-[11px] text-muted mt-0.5">
-            {kpis.wins}W · {kpis.losses}L · {kpis.breakevens}BE
+            {kpis.win_trades}W · {kpis.loss_trades}L · {kpis.be_trades}BE
           </div>
           {book === "compare" && compareKpis && (
             <div className="text-[10px] mt-1 pt-1 border-t border-border/50 text-muted flex items-center justify-between">
@@ -74,11 +75,11 @@ export const JournalKpiGrid: React.FC<JournalKpiGridProps> = ({
       <div className="p-3.5 rounded-xl bg-surface border border-border shadow-sm flex flex-col justify-between">
         <div className="flex items-center justify-between text-muted text-xs">
           <span>Profit Factor</span>
-          <Trophy className={`w-4 h-4 ${kpis.profit_factor >= 1.5 ? "text-emerald-400" : "text-muted"}`} />
+          <Trophy className={`w-4 h-4 ${profitFactor >= 1.5 ? "text-emerald-400" : "text-muted"}`} />
         </div>
         <div className="mt-2">
           <div className="text-xl font-bold font-mono text-fg">
-            {kpis.profit_factor >= 999 ? "∞" : formatIdNumber(kpis.profit_factor, 2)}
+            {profitFactor >= 999 ? "∞" : formatIdNumber(profitFactor, 2)}
           </div>
           <div className="text-[11px] text-muted mt-0.5">
             Target: ≥ 1.50
@@ -87,7 +88,9 @@ export const JournalKpiGrid: React.FC<JournalKpiGridProps> = ({
             <div className="text-[10px] mt-1 pt-1 border-t border-border/50 text-muted flex items-center justify-between">
               <span>Real:</span>
               <span className="font-mono font-semibold text-fg">
-                {compareKpis.profit_factor >= 999 ? "∞" : formatIdNumber(compareKpis.profit_factor, 2)}
+                {(compareKpis.profit_factor ?? 0) >= 999
+                  ? "∞"
+                  : formatIdNumber(compareKpis.profit_factor ?? 0, 2)}
               </span>
             </div>
           )}
@@ -126,16 +129,16 @@ export const JournalKpiGrid: React.FC<JournalKpiGridProps> = ({
         </div>
         <div className="mt-2">
           <div className={`text-xl font-bold font-mono ${isPnlPositive ? "text-emerald-400" : "text-rose-400"}`}>
-            {isPnlPositive ? "+" : ""}${formatIdNumber(kpis.total_realized_pnl_usd, 2)}
+            {isPnlPositive ? "+" : ""}${formatIdNumber(kpis.total_pnl_usd, 2)}
           </div>
           <div className="text-[11px] text-muted mt-0.5 font-mono">
-            {kpis.total_realized_pnl_r >= 0 ? "+" : ""}{formatIdNumber(kpis.total_realized_pnl_r, 1)} R
+            {kpis.total_pnl_r >= 0 ? "+" : ""}{formatIdNumber(kpis.total_pnl_r, 1)} R
           </div>
           {book === "compare" && compareKpis && (
             <div className="text-[10px] mt-1 pt-1 border-t border-border/50 text-muted flex items-center justify-between">
               <span>Real:</span>
-              <span className={`font-mono font-semibold ${compareKpis.total_realized_pnl_usd >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                ${formatIdNumber(compareKpis.total_realized_pnl_usd, 2)}
+              <span className={`font-mono font-semibold ${compareKpis.total_pnl_usd >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                ${formatIdNumber(compareKpis.total_pnl_usd, 2)}
               </span>
             </div>
           )}
@@ -150,16 +153,16 @@ export const JournalKpiGrid: React.FC<JournalKpiGridProps> = ({
         </div>
         <div className="mt-2">
           <div className="text-xl font-bold font-mono text-amber-400">
-            -{formatIdNumber(kpis.max_drawdown_pct, 1)}%
+            -{formatIdNumber(kpis.max_drawdown_r, 1)} R
           </div>
           <div className="text-[11px] text-muted mt-0.5 font-mono">
-            -{formatIdNumber(kpis.max_drawdown_r, 1)} R (${formatIdNumber(kpis.max_drawdown_usd, 1)})
+            (${formatIdNumber(kpis.max_drawdown_usd, 1)})
           </div>
           {book === "compare" && compareKpis && (
             <div className="text-[10px] mt-1 pt-1 border-t border-border/50 text-muted flex items-center justify-between">
               <span>Real:</span>
               <span className="font-mono font-semibold text-amber-400">
-                -{formatIdNumber(compareKpis.max_drawdown_pct, 1)}%
+                -{formatIdNumber(compareKpis.max_drawdown_r, 1)} R
               </span>
             </div>
           )}

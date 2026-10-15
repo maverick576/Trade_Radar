@@ -32,16 +32,16 @@ export const JournalHeatmap: React.FC<JournalHeatmapProps> = ({
     );
   }
 
-  // Build 7x24 lookup matrix: day_of_week (0..6) x hour_of_day (0..23)
+  // Build 7x24 lookup matrix: day_of_week (0..6) x hour_wib (0..23)
   const cellMap = new Map<string, HeatmapCell>();
   cells.forEach((c) => {
-    cellMap.set(`${c.day_of_week}-${c.hour_of_day}`, c);
+    cellMap.set(`${c.day_of_week}-${c.hour_wib}`, c);
   });
 
   // Calculate maximum absolute R for color scale
   let maxAbsR = 1.0;
   cells.forEach((c) => {
-    const abs = Math.abs(c.net_r);
+    const abs = Math.abs(c.total_pnl_r);
     if (abs > maxAbsR) maxAbsR = abs;
   });
 
@@ -50,13 +50,13 @@ export const JournalHeatmap: React.FC<JournalHeatmapProps> = ({
       return "bg-slate-800/30 border-slate-800/60 hover:border-slate-600";
     }
 
-    const intensity = Math.min(1, Math.abs(cell.net_r) / maxAbsR);
+    const intensity = Math.min(1, Math.abs(cell.total_pnl_r) / maxAbsR);
 
-    if (cell.net_r > 0) {
+    if (cell.total_pnl_r > 0) {
       if (intensity > 0.6) return "bg-emerald-500 text-black font-semibold border-emerald-400";
       if (intensity > 0.3) return "bg-emerald-600/80 text-white border-emerald-500/60";
       return "bg-emerald-900/60 text-emerald-200 border-emerald-700/50";
-    } else if (cell.net_r < 0) {
+    } else if (cell.total_pnl_r < 0) {
       if (intensity > 0.6) return "bg-rose-500 text-white font-semibold border-rose-400";
       if (intensity > 0.3) return "bg-rose-600/80 text-white border-rose-500/60";
       return "bg-rose-900/60 text-rose-200 border-rose-700/50";
@@ -130,13 +130,13 @@ export const JournalHeatmap: React.FC<JournalHeatmapProps> = ({
                         setHoveredCell(
                           cell || {
                             day_of_week: dayIdx,
-                            hour_of_day: hour,
+                            day_name: dayName,
+                            hour_wib: hour,
                             total_trades: 0,
-                            wins: 0,
-                            losses: 0,
+                            win_trades: 0,
                             winrate_pct: 0,
-                            net_r: 0,
-                            net_pnl_usd: 0,
+                            total_pnl_r: 0,
+                            total_pnl_usd: 0,
                           }
                         )
                       }
@@ -176,23 +176,23 @@ export const JournalHeatmap: React.FC<JournalHeatmapProps> = ({
             <div>
               <span className="text-muted">Waktu: </span>
               <strong className="text-fg">
-                {DAY_LABELS[hoveredCell.day_of_week]}, {hoveredCell.hour_of_day.toString().padStart(2, "0")}:00 WIB
+                {DAY_LABELS[hoveredCell.day_of_week]}, {hoveredCell.hour_wib.toString().padStart(2, "0")}:00 WIB
               </strong>
             </div>
             <div>
               <span className="text-muted">Total Trade: </span>
               <strong className="text-fg">{hoveredCell.total_trades}</strong>{" "}
-              ({hoveredCell.wins}W / {hoveredCell.losses}L · {formatIdNumber(hoveredCell.winrate_pct, 1)}%)
+              ({hoveredCell.win_trades}W / {hoveredCell.total_trades - hoveredCell.win_trades}L · {formatIdNumber(hoveredCell.winrate_pct, 1)}%)
             </div>
             <div>
               <span className="text-muted">Hasil Net: </span>
               <strong
                 className={
-                  hoveredCell.net_r >= 0 ? "text-emerald-400" : "text-rose-400"
+                  hoveredCell.total_pnl_r >= 0 ? "text-emerald-400" : "text-rose-400"
                 }
               >
-                {hoveredCell.net_r >= 0 ? "+" : ""}
-                {formatIdNumber(hoveredCell.net_r, 2)} R (${formatIdNumber(hoveredCell.net_pnl_usd, 2)})
+                {hoveredCell.total_pnl_r >= 0 ? "+" : ""}
+                {formatIdNumber(hoveredCell.total_pnl_r, 2)} R (${formatIdNumber(hoveredCell.total_pnl_usd, 2)})
               </strong>
             </div>
           </>

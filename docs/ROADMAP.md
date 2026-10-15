@@ -61,7 +61,7 @@ Estimasi: ±14–18 sesi agent.
 - **Selesai bila:** `/analisa XAUUSD` membalas teks + gambar ≤ 20 dtk; eksekusi via Telegram muncul di Jurnal Real; chat tak terdaftar diabaikan.
 
 ## Fase 8 — Jurnal & statistik
-- [ ] `stats/` + continuous aggregate; buku Paper/Real/Bandingkan, akurasi per indikator, nilai macro filter, slippage nyata, heatmap, ekspor CSV.
+- [x] `stats/` + continuous aggregate; buku Paper/Real/Bandingkan, akurasi per indikator, nilai macro filter, slippage nyata, heatmap, ekspor CSV.
 - **Selesai bila:** angka UI = skrip verifikasi SQL independen; `/winrate` Telegram konsisten dengan UI.
 
 ## Fase 9 — Kalender berita

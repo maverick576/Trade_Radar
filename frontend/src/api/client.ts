@@ -88,13 +88,13 @@ export type AIQuotaResponse =
   paths["/api/ai/quota"]["get"]["responses"][200]["content"]["application/json"];
 export type JournalResponse =
   paths["/api/stats"]["get"]["responses"][200]["content"]["application/json"];
-export type TradeRecordItem = JournalResponse["trades"][number];
+export type TradeRecordItem = NonNullable<JournalResponse["trades"]>[number];
 export type JournalKPIs = JournalResponse["kpis"];
-export type EquityPoint = JournalResponse["equity_curve"][number];
-export type HeatmapCell = JournalResponse["heatmap"][number];
-export type BreakdownItem = JournalResponse["breakdowns"][string][number];
-export type IndicatorAccuracyItem = JournalResponse["indicator_accuracy"][number];
-export type MacroFilterImpactItem = JournalResponse["macro_filter_impact"][number];
+export type EquityPoint = NonNullable<JournalResponse["equity_curve"]>[number];
+export type HeatmapCell = NonNullable<JournalResponse["heatmap"]>[number];
+export type BreakdownItem = NonNullable<NonNullable<JournalResponse["breakdowns"]>[string]>[number];
+export type IndicatorAccuracyItem = NonNullable<JournalResponse["indicator_accuracy"]>[number];
+export type MacroFilterImpactItem = NonNullable<JournalResponse["macro_filter_impact"]>[number];
 export type SlippageStats = JournalResponse["slippage_metrics"];
 export type TradeAnalysisSnapshotResponse =
   paths["/api/stats/trades/{trade_id}/snapshot"]["get"]["responses"][200]["content"]["application/json"];
@@ -103,6 +103,7 @@ export type JournalBookType = "paper" | "real" | "compare";
 
 export const getJournalStats = async (params: {
   book?: string;
+  range_str?: string;
   symbol?: string;
   strategy?: string;
   date_from?: string;
@@ -112,10 +113,11 @@ export const getJournalStats = async (params: {
     params: {
       query: {
         book: params.book as "paper" | "real" | "compare" | undefined,
+        range: params.range_str,
         symbol: params.symbol,
         strategy: params.strategy,
-        date_from: params.date_from,
-        date_to: params.date_to,
+        from_dt: params.date_from,
+        to_dt: params.date_to,
       },
     },
   });
@@ -128,7 +130,7 @@ export const getTradeSnapshot = async (
 ): Promise<TradeAnalysisSnapshotResponse> => {
   const res = await apiClient.GET("/api/stats/trades/{trade_id}/snapshot", {
     params: {
-      path: { trade_id: tradeId },
+      path: { trade_id: Number(tradeId) },
     },
   });
   if (res.error) throw new Error(String(res.error));
@@ -137,6 +139,7 @@ export const getTradeSnapshot = async (
 
 export const exportJournalCsv = async (params: {
   book?: string;
+  range_str?: string;
   symbol?: string;
   strategy?: string;
   date_from?: string;
@@ -144,10 +147,11 @@ export const exportJournalCsv = async (params: {
 }): Promise<void> => {
   const searchParams = new URLSearchParams();
   if (params.book) searchParams.set("book", params.book);
+  if (params.range_str) searchParams.set("range", params.range_str);
   if (params.symbol) searchParams.set("symbol", params.symbol);
   if (params.strategy) searchParams.set("strategy", params.strategy);
-  if (params.date_from) searchParams.set("date_from", params.date_from);
-  if (params.date_to) searchParams.set("date_to", params.date_to);
+  if (params.date_from) searchParams.set("from_dt", params.date_from);
+  if (params.date_to) searchParams.set("to_dt", params.date_to);
 
   const url = `${getBaseUrl()}/api/stats/export.csv?${searchParams.toString()}`;
   const res = await globalThis.fetch(url, { credentials: "include" });

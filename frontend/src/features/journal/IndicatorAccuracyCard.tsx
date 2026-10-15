@@ -64,7 +64,7 @@ export const IndicatorAccuracyCard: React.FC<IndicatorAccuracyCardProps> = ({
       {/* Grid of Indicators */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
         {items.map((item, idx) => {
-          const edge = item.aligned_winrate_pct - item.contrarian_winrate_pct;
+          const edge = item.net_edge_pct;
           const hasSignificantEdge = edge > 5 && item.aligned_trades >= 3;
           const hasInvertedEdge = edge < -5 && item.contrarian_trades >= 3;
 
@@ -75,7 +75,7 @@ export const IndicatorAccuracyCard: React.FC<IndicatorAccuracyCardProps> = ({
             >
               {/* Title & Edge Badge */}
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-fg">{item.indicator_name}</span>
+                <span className="text-xs font-semibold text-fg">{item.name}</span>
                 <span
                   className={`text-[10px] font-mono px-2 py-0.5 rounded-md flex items-center gap-1 font-semibold ${
                     hasSignificantEdge
@@ -134,25 +134,25 @@ export const IndicatorAccuracyCard: React.FC<IndicatorAccuracyCardProps> = ({
               {/* R Contribution summary */}
               <div className="flex items-center justify-between text-[10px] text-muted font-mono pt-1 border-t border-border/40">
                 <span>
-                  Kontribusi R Searah:{" "}
+                  Avg R Searah:{" "}
                   <strong
                     className={
-                      item.aligned_r_contrib >= 0 ? "text-emerald-400" : "text-rose-400"
+                      item.aligned_avg_r >= 0 ? "text-emerald-400" : "text-rose-400"
                     }
                   >
-                    {item.aligned_r_contrib >= 0 ? "+" : ""}
-                    {formatIdNumber(item.aligned_r_contrib, 2)} R
+                    {item.aligned_avg_r >= 0 ? "+" : ""}
+                    {formatIdNumber(item.aligned_avg_r, 2)} R
                   </strong>
                 </span>
                 <span>
-                  Kontribusi R Lawan:{" "}
+                  Avg R Lawan:{" "}
                   <strong
                     className={
-                      item.contrarian_r_contrib >= 0 ? "text-emerald-400" : "text-rose-400"
+                      item.contrarian_avg_r >= 0 ? "text-emerald-400" : "text-rose-400"
                     }
                   >
-                    {item.contrarian_r_contrib >= 0 ? "+" : ""}
-                    {formatIdNumber(item.contrarian_r_contrib, 2)} R
+                    {item.contrarian_avg_r >= 0 ? "+" : ""}
+                    {formatIdNumber(item.contrarian_avg_r, 2)} R
                   </strong>
                 </span>
               </div>

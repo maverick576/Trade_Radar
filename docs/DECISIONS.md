@@ -249,3 +249,41 @@ Dokumen ini mencatat keputusan teknis, pinning versi, dan verifikasi asumsi ekst
   6. **Endpoint Pengaturan & Uji Koneksi Telegram (`routers/settings.py`):**
      - `GET /api/settings/telegram/status`: Mengembalikan konfigurasi bot, status online, jumlah pelanggan aktif, dan daftar chat ID terverifikasi.
      - `POST /api/settings/telegram/test`: Mengirimkan pesan pengujian instan ke semua subscriber aktif untuk verifikasi koneksi dari dashboard web.
+
+---
+
+## ADR-010: Jurnal, Statistik, Continuous Aggregates & Metrik Kinerja (Fase 8)
+- **Tanggal:** 15 Oktober 2026
+- **Status:** Diterima
+- **Keputusan Teknis & Arsitektur:**
+  1. **TimescaleDB Continuous Aggregates & Hypertables (`006_create_phase8_stats.py`):**
+     - Tabel `paper_trades` dan `real_executions` dioptimasi sebagai TimescaleDB hypertables yang dipartisi berdasarkan `exit_time` (atau `executed_at`).
+     - Tampilan continuous aggregates material teragregasi harian (`daily_paper_stats` dan `daily_real_stats`) dibuat menggunakan `time_bucket('1 day', exit_time)` dengan metrik: `total_trades`, `win_trades`, `loss_trades`, `be_trades`, `total_pnl_usd`, `total_pnl_r`, `gross_profit_usd`, `gross_loss_usd`.
+     - Ditambahkan continuous aggregate policy otomatis dengan refresh interval 1 jam (`start_offset => INTERVAL '30 days'`, `end_offset => INTERVAL '1 hour'`) untuk query performa tinggi pada riwayat transaksi panjang.
+  2. **Kalkulasi Metrik & KPI Deterministik (`traderadar.stats.metrics`):**
+     - Formula metrik standar industri trading kuantitatif:
+       - **Winrate (%):** Win / (Total - BE) dan Win / Total.
+       - **Profit Factor:** Gross Profit / |Gross Loss| dengan penanganan division-by-zero (`inf` / `None`).
+       - **Expectancy ($ dan R):** (P_win * Avg Win) - (P_loss * Avg Loss).
+       - **Maximum Drawdown (R & USD):** Berbasis running cumulative equity peak-to-trough.
+       - **Streaks:** Max consecutive wins dan max consecutive losses.
+     - Mendukung 3 Mode Buku:
+       - `paper`: Evaluasi transaksi virtual mesin paper trading.
+       - `real`: Evaluasi eksekusi nyata dari pengguna.
+       - `bandingkan`: Komparasi side-by-side selisih metrik antara Paper dan Real untuk mengukur *execution discipline & gap*.
+  3. **Akurasi per Indikator & Nilai Macro Filter (`traderadar.stats.service`):**
+     - **Akurasi per Indikator:** Mengevaluasi efektivitas masing-masing dari 10 indikator teknikal konfluensi ketika statusnya selaras (*aligned*) vs melawan arah (*contrarian*) terhadap hasil akhir trade. Menghasilkan net winrate edge (%) dan kontribusi rata-rata R.
+     - **Nilai Macro Filter (M1–M8):** Mengevaluasi trade virtual (`is_virtual = True`) yang diblokir oleh gerbang macro filter. Menghitung jumlah kerugian yang berhasil dicegah (*losses prevented*), potensi kemenangan yang terlewat (*wins missed*), serta net R yang terselamatkan.
+  4. **Analisis Slippage Nyata (`slippage_stats`):**
+     - Menghitung deviasi titik (P_fill - P_signal), ekuivalen biaya kerugian/keuntungan dalam USD, serta distribusi breakdown per profil broker dan instrumen simbol.
+  5. **Visualisasi Data & UX Halaman Jurnal (`frontend/src/features/journal/`):**
+     - **Cumulative Equity Curve:** Grafik area garis interaktif dual-mode (R-Multiple dan USD).
+     - **Distribusi R-Multiple:** Histogram frekuensi sebaran hasil trading (kategori Loss > 2R, Loss 1–2R, BE, Win 1–2R, Win > 2R).
+     - **7×24 Day×Hour Heatmap (WIB):** Matriks performa 7 hari × 24 jam dalam zona waktu lokal `Asia/Jakarta` untuk mengidentifikasi *prime trading window*.
+     - **Breakdown Multi-Dimensi:** Tabel rincian performa berdasarkan Simbol, Strategi, Sesi Pasar (Asia, London, New York), dan Verdict Sinyal.
+     - **Modal Snapshot Analisa Trade:** Menampilkan kembali kondisi teknikal, rincian skor indikator, dan kutipan AI saat bar entri trade tercatat.
+     - **Ekspor RFC 4180 CSV:** Endpoint `/api/stats/export.csv` dengan UTF-8 BOM (`\ufeff`) untuk kompatibilitas langsung tanpa corrupt formatting di Microsoft Excel.
+  6. **Paritas Penuh UI, SQL Independen, dan Telegram Bot:**
+     - Skrip verifikasi mandiri `verify_stats.py` menguji dan memvalidasi kebenaran seluruh formula SQL secara langsung terhadap TimescaleDB.
+     - Perintah Telegram `/winrate` memanggil service `get_journal_stats` yang sama, memastikan konsistensi metrik 100% antara Web UI dan Telegram Bot.
+

@@ -83,15 +83,15 @@ export const MacroFilterImpactCard: React.FC<MacroFilterImpactCardProps> = ({
                 {/* Rule title & code */}
                 <div className="flex items-center justify-between">
                   <span className="px-2 py-0.5 rounded font-mono font-bold text-xs bg-accent/15 text-accent border border-accent/20">
-                    {rule.rule_code}
+                    {rule.code}
                   </span>
                   <span className="text-xs font-mono text-muted">
                     {rule.blocked_count}x blokir
                   </span>
                 </div>
 
-                <div className="text-xs font-medium text-fg line-clamp-1" title={rule.rule_name}>
-                  {rule.rule_name}
+                <div className="text-xs font-medium text-fg line-clamp-1" title={rule.name}>
+                  {rule.name}
                 </div>
 
                 {/* Simulated outcome stats */}

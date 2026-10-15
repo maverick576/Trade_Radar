@@ -1,3 +1,32 @@
+
+## [Fase 8] - 2026-10-15
+### Ditambahkan
+- **Continuous Aggregates TimescaleDB**: Migrasi Alembic `006_create_phase8_stats.py` mengonversi `paper_trades` dan `real_executions` menjadi hypertables serta membuat view materialized `daily_paper_stats` dan `daily_real_stats` dengan policy refresh otomatis per 1 jam.
+- **Package `traderadar.stats`**:
+  - `metrics.py`: Kalkulasi deterministik metrik trading kuantitatif (Winrate, Profit Factor, Expectancy R & USD, Max Drawdown peak-to-trough, Win/Loss Streaks, R-Multiple Distribution).
+  - `models.py`: Skema Pydantic komprehensif untuk KPI jurnal, kurva ekuitas, distribusi R, heatmap 7x24 jam WIB, breakdown multi-dimensi (simbol, strategi, sesi, verdict), akurasi per indikator, nilai macro filter, slippage nyata, dan rincian transaksi.
+  - `service.py`: Service query async ke database TimescaleDB menggabungkan continuous aggregate dan data trade real-time.
+- **REST Endpoints Statistik (`traderadar.api.routers.stats`)**:
+  - `GET /api/stats`: Mengembalikan ringkasan statistik komprehensif untuk buku `paper`, `real`, atau `bandingkan`.
+  - `GET /api/stats/trades/{trade_id}/snapshot`: Mengambil snapshot kondisi analisa teknikal dan AI saat entri posisi.
+  - `GET /api/stats/export.csv`: Ekspor seluruh catatan transaksi dalam format RFC 4180 CSV ber-BOM UTF-8.
+- **Skrip Verifikasi SQL Mandiri (`traderadar/scripts/verify_stats.py`)**: Verifikasi independen formula agregasi SQL TimescaleDB vs fungsi komputasi Python.
+- **Paritas Bot Telegram**: Refaktor handler perintah `/winrate` untuk menggunakan `get_journal_stats` langsung sehingga angka di Telegram identik 100% dengan UI web.
+- **Frontend Modul Jurnal (`frontend/src/features/journal/`)**:
+  - `JournalBookToggle`: Toggle pilihan buku (Paper / Real / Bandingkan).
+  - `JournalFilterBar`: Filter dinamis rentang tanggal, simbol, strategi, dan sesi.
+  - `JournalKpiGrid`: Tampilan 8 kartu KPI trading profesional (Winrate, Profit Factor, Expectancy, Max DD, Net PnL, Total Trades, Streaks).
+  - `JournalEquityCurve`: Grafik area interaktif pertumbuhan ekuitas dalam mode R dan USD.
+  - `JournalRDistribution`: Visualisasi histogram sebaran frekuensi R-Multiple.
+  - `JournalHeatmap`: Heatmap matriks 7 hari x 24 jam (zona waktu WIB) performa PnL dan jumlah trade.
+  - `JournalBreakdowns`: Rincian multidimensi performa per simbol, strategi, sesi market (Asia, London, New York), dan verdict sinyal.
+  - `IndicatorAccuracyCard`: Analisis winrate edge dan kontribusi R untuk 10 indikator saat aligned vs contrarian.
+  - `MacroFilterImpactCard`: Evaluasi efektivitas gerbang filter M1-M8 terhadap trade virtual (losses prevented vs wins missed).
+  - `RealSlippageCard`: Analisis deviasi titik slippage nyata dan biaya USD berdasarkan profil broker dan instrumen.
+  - `JournalTradesTable`: Tabel riwayat transaksi lengkap dengan badge status dan aksi klik baris untuk membuka modal snapshot analisa.
+  - `TradeSnapshotModal`: Modal detail snapshot analisa teknikal & tanggapan AI saat bar entri.
+- **Halaman Jurnal (`frontend/src/pages/JurnalPage.tsx`)**: Integrasi penuh semua komponen jurnal dengan tombol ekspor CSV dan navigasi shell tab Jurnal.
+
 # Changelog
 
 Semua perubahan penting pada TradeRadar didokumentasikan di file ini.

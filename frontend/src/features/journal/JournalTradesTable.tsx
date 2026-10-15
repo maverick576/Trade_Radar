@@ -10,7 +10,7 @@ import { formatIdNumber } from "../tickets/formatTicket";
 
 interface JournalTradesTableProps {
   trades: TradeRecordItem[];
-  onSelectTrade: (tradeId: string) => void;
+  onSelectTrade: (tradeId: number) => void;
   isLoading?: boolean;
 }
 
@@ -24,10 +24,17 @@ export const JournalTradesTable: React.FC<JournalTradesTableProps> = ({
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 15;
 
+  const getOutcome = (t: TradeRecordItem): "WIN" | "LOSS" | "BREAKEVEN" => {
+    if (t.pnl_r > 0.05) return "WIN";
+    if (t.pnl_r < -0.05) return "LOSS";
+    return "BREAKEVEN";
+  };
+
   // Filter trades
   const filtered = useMemo(() => {
     return trades.filter((t) => {
-      if (filterOutcome !== "ALL" && t.outcome !== filterOutcome) {
+      const outcome = getOutcome(t);
+      if (filterOutcome !== "ALL" && outcome !== filterOutcome) {
         return false;
       }
       if (!searchTerm) return true;
@@ -56,28 +63,14 @@ export const JournalTradesTable: React.FC<JournalTradesTableProps> = ({
     );
   }
 
-  const formatWibDate = (isoStr: string | null | undefined) => {
-    if (!isoStr) return "-";
-    try {
-      const d = new Date(isoStr);
-      return d.toLocaleString("id-ID", {
-        timeZone: "Asia/Jakarta",
-        day: "2-digit",
-        month: "short",
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-    } catch {
-      return isoStr;
-    }
-  };
-
   return (
     <div className="p-5 rounded-2xl bg-surface border border-border shadow-sm flex flex-col gap-4">
       {/* Header & Search Controls */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/50 pb-3">
         <div>
-          <h3 className="text-sm font-semibold text-fg">Riwayat Posisi & Eksekusi ({trades.length})</h3>
+          <h3 className="text-sm font-semibold text-fg">
+            Riwayat Posisi & Eksekusi ({trades.length})
+          </h3>
           <p className="text-xs text-muted">
             Daftar lengkap posisi tertutup beserta snapshot kondisi teknikal saat entry
           </p>
@@ -133,7 +126,7 @@ export const JournalTradesTable: React.FC<JournalTradesTableProps> = ({
                 <th className="py-2.5 px-3 font-medium">Strategi</th>
                 <th className="py-2.5 px-3 font-medium text-right">Entry</th>
                 <th className="py-2.5 px-3 font-medium text-right">Exit</th>
-                <th className="py-2.5 px-3 font-medium text-right">Lot</th>
+                <th className="py-2.5 px-3 font-medium text-right">Durasi</th>
                 <th className="py-2.5 px-3 font-medium text-center">Alasan</th>
                 <th className="py-2.5 px-3 font-medium text-right">PnL (R)</th>
                 <th className="py-2.5 px-3 font-medium text-right">PnL ($)</th>
@@ -148,7 +141,7 @@ export const JournalTradesTable: React.FC<JournalTradesTableProps> = ({
                   <tr key={t.id} className="hover:bg-surface-hover/50 transition-colors">
                     {/* Waktu Entry */}
                     <td className="py-2.5 px-3 text-fg whitespace-nowrap">
-                      {formatWibDate(t.entry_time)}
+                      {t.entry_time_wib || t.entry_time.slice(0, 16)}
                     </td>
 
                     {/* Buku */}
@@ -203,8 +196,8 @@ export const JournalTradesTable: React.FC<JournalTradesTableProps> = ({
                       {t.exit_price || "-"}
                     </td>
 
-                    {/* Lot */}
-                    <td className="py-2.5 px-3 text-right text-muted">{t.lot}</td>
+                    {/* Durasi */}
+                    <td className="py-2.5 px-3 text-right text-muted">{t.bars_held} bar</td>
 
                     {/* Exit Reason */}
                     <td className="py-2.5 px-3 text-center">
