@@ -31,8 +31,8 @@ def _make_dummy_indicators(states: dict[str, tuple[str, float]]) -> list[Indicat
         results.append(
             IndicatorResult(
                 key=key,
-                category=cat,  # type: ignore[arg-type]
-                state=st,  # type: ignore[arg-type]
+                category=cat,
+                state=st,
                 strength=strg,
                 values={},
                 reason=f"Test indicator {key}",

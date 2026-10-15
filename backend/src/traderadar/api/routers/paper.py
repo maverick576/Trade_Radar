@@ -50,7 +50,7 @@ async def list_paper_trades(
             signal_id=r.signal_id,
             strategy=r.strategy,
             symbol=r.symbol,
-            side=r.side,  # type: ignore[arg-type]
+            side=r.side,
             entry_time=r.entry_time,
             entry_price=r.entry_price,
             size=r.size,
@@ -120,7 +120,7 @@ async def close_paper_trade(
         signal_id=record.signal_id,
         strategy=record.strategy,
         symbol=record.symbol,
-        side=record.side,  # type: ignore[arg-type]
+        side=record.side,
         entry_time=record.entry_time,
         entry_price=record.entry_price,
         size=record.size,

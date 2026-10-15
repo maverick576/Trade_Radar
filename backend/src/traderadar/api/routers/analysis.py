@@ -5,9 +5,13 @@ from typing import Annotated, Any
 
 import pandas as pd
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from traderadar.ai.schemas import AIComment, AIInputPayload
+from traderadar.ai.service import AIService
 from traderadar.api.deps import get_current_user, get_db, get_redis_client
+from traderadar.api.schemas.ai import AICommentResponse
 from traderadar.api.schemas.analysis import (
     AnalysisResponse,
     ScoreHistoryItem,
@@ -15,7 +19,9 @@ from traderadar.api.schemas.analysis import (
     SignalItem,
     SignalsResponse,
 )
-from traderadar.core.models import User
+from traderadar.core.config import get_settings
+from traderadar.core.models import AICommentRecord, TicketRecord, User
+from traderadar.core.time import utc_now
 from traderadar.engine.strategies.konfluensi10 import ConfluencePipeline
 from traderadar.services.analysis_store import (
     get_analysis_history,
@@ -235,3 +241,172 @@ async def get_signals_endpoint(
         for r in records
     ]
     return SignalsResponse(signals=items, total=len(items))
+
+
+@router.get("/analysis/{symbol}/ai", response_model=AICommentResponse)
+async def get_ai_comment_endpoint(
+    symbol: str,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+    tf: Annotated[str, Query(description="Timeframe e.g. M15")] = "M15",
+) -> AICommentResponse:
+    """Retrieve the latest structured AI commentary for a symbol."""
+    sym_upper = symbol.upper()
+    tf_upper = tf.upper()
+
+    # Find latest analysis record
+    analysis = await get_latest_analysis(db, sym_upper, tf_upper)
+    if not analysis:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Belum ada data analisis untuk {sym_upper} ({tf_upper})",
+        )
+
+    # Find associated AI comment
+    stmt = (
+        select(AICommentRecord)
+        .where(AICommentRecord.analysis_id == analysis.id)
+        .order_by(desc(AICommentRecord.created_at))
+        .limit(1)
+    )
+    res = await db.execute(stmt)
+    comment_rec = res.scalar_one_or_none()
+
+    if not comment_rec:
+        # Check any recent comment for symbol
+        stmt_sym = (
+            select(AICommentRecord)
+            .where(AICommentRecord.kind.in_(["analysis", "ondemand"]))
+            .order_by(desc(AICommentRecord.created_at))
+            .limit(10)
+        )
+        res_sym = await db.execute(stmt_sym)
+        for cand in res_sym.scalars().all():
+            if cand.content.get("symbol") == sym_upper:
+                comment_rec = cand
+                break
+
+    if not comment_rec:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Belum ada komentar AI untuk {sym_upper}. Silakan klik 'Minta analisa AI'.",
+        )
+
+    content = comment_rec.content
+    comment_data = {k: v for k, v in content.items() if k not in ["symbol", "tf", "is_fallback"]}
+    comment_obj = AIComment.model_validate(comment_data)
+
+    return AICommentResponse(
+        symbol=sym_upper,
+        tf=tf_upper,
+        comment=comment_obj,
+        provider=comment_rec.provider,
+        model=comment_rec.model,
+        valid=comment_rec.valid,
+        is_fallback=content.get("is_fallback", False),
+        latency_ms=comment_rec.latency_ms,
+        tokens_in=comment_rec.tokens_in or 0,
+        tokens_out=comment_rec.tokens_out or 0,
+        created_at=comment_rec.created_at,
+        analysis_id=comment_rec.analysis_id,
+    )
+
+
+@router.post("/analysis/{symbol}/ai", response_model=AICommentResponse)
+async def generate_ai_comment_endpoint(
+    symbol: str,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+    redis_client: Annotated[Any, Depends(get_redis_client)],
+    tf: Annotated[str, Query(description="Timeframe e.g. M15")] = "M15",
+) -> AICommentResponse:
+    """Generate on-demand structured AI technical analysis for a symbol."""
+    sym_upper = symbol.upper()
+    tf_upper = tf.upper()
+
+    analysis = await get_latest_analysis(db, sym_upper, tf_upper)
+    if not analysis:
+        # Trigger on-the-fly analysis evaluation first
+        await get_latest_analysis_endpoint(
+            symbol=sym_upper,
+            current_user=current_user,
+            db=db,
+            redis_client=redis_client,
+            tf=tf_upper,
+            preview_live=False,
+        )
+        analysis = await get_latest_analysis(db, sym_upper, tf_upper)
+
+    if not analysis:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Tidak dapat menghasilkan analisis untuk {sym_upper}",
+        )
+
+    # Check for active ticket to get plan
+    stmt_t = (
+        select(TicketRecord)
+        .where(TicketRecord.symbol == sym_upper, TicketRecord.status == "new")
+        .order_by(desc(TicketRecord.created_at))
+        .limit(1)
+    )
+    res_t = await db.execute(stmt_t)
+    ticket = res_t.scalar_one_or_none()
+
+    price = 0.0
+    plan = None
+    if ticket:
+        price = ticket.entry
+        plan = {
+            "entry": ticket.entry,
+            "sl": ticket.sl,
+            "tp1": ticket.tp1,
+            "tp2": ticket.tp2,
+            "atr": ticket.atr,
+        }
+    else:
+        for ind in analysis.indicators:
+            if "vwap" in ind.get("values", {}):
+                price = float(ind["values"]["vwap"])
+                break
+
+    payload = AIInputPayload(
+        symbol=sym_upper,
+        tf=tf_upper,
+        bar_time=analysis.bar_time.isoformat(),
+        price=price or 1.0,
+        verdict=analysis.verdict,
+        score=analysis.score,
+        counts=analysis.counts,
+        indicators=analysis.indicators,
+        macro=analysis.macro,
+        plan=plan,
+        htf=analysis.htf,
+        strategy_b=analysis.strategy_b,
+    )
+
+    settings = get_settings()
+    ai_service = AIService(settings=settings, redis_client=redis_client)
+
+    ai_resp = await ai_service.generate_comment(
+        payload=payload,
+        analysis_id=analysis.id,
+        session=db,
+        is_ondemand=True,
+    )
+    await db.commit()
+
+    return AICommentResponse(
+        symbol=sym_upper,
+        tf=tf_upper,
+        comment=ai_resp.comment,
+        provider=ai_resp.provider,
+        model=ai_resp.model,
+        valid=ai_resp.valid,
+        is_fallback=ai_resp.is_fallback,
+        latency_ms=ai_resp.latency_ms,
+        tokens_in=ai_resp.tokens_in,
+        tokens_out=ai_resp.tokens_out,
+        created_at=utc_now(),
+        analysis_id=analysis.id,
+    )

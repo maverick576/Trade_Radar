@@ -5,8 +5,10 @@ Entry 2651.0, SL 2636.5, TP 2665.5 / 2680.0, 0.06 lot for $10,000 balance (actua
 """
 
 from datetime import UTC, datetime, timedelta
+from typing import Literal
 
 from traderadar.core.config import BrokerProfile, BrokerSymbolConfig
+from traderadar.core.time import utc_now
 from traderadar.engine.risk import (
     calculate_lot_size,
     round_to_tick,
@@ -34,7 +36,7 @@ def test_blueprint_example_exact_reproduction() -> None:
     entry = 2651.0
     # 1.5 * atr = 14.5 -> atr = 14.5 / 1.5 = 9.666666666666666
     atr14 = 14.5 / 1.5
-    side = "LONG"
+    side: Literal["LONG", "SHORT"] = "LONG"
 
     # Broker profile (Exness Standard, Gold 100 oz contract)
     profile = BrokerProfile(
@@ -137,7 +139,7 @@ def test_lot_size_floor_and_min_lot_warning() -> None:
 
 def test_broker_offset_calibration_and_expiration() -> None:
     """Test applying broker offset (+1.3) and checking expiration."""
-    now = datetime(2026, 10, 15, 10, 0, tzinfo=UTC)
+    now = utc_now()
     cal = BrokerCalibration(
         symbol="XAUUSD",
         broker_profile="Exness Standard",

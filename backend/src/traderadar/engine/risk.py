@@ -90,8 +90,7 @@ def calculate_lot_size(
         actual_risk_usd = round(actual_lot * sl_usd_per_lot, 2)
         actual_risk_pct = round((actual_risk_usd / balance) * 100.0, 2)
         warning_message = (
-            f"Risiko aktual {actual_risk_pct:.2f}% > batas {risk_pct:.2f}% "
-            f"(lot minimum {min_lot})"
+            f"Risiko aktual {actual_risk_pct:.2f}% > batas {risk_pct:.2f}% (lot minimum {min_lot})"
         )
     else:
         actual_lot = calculated_lot

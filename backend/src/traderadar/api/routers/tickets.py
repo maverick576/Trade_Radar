@@ -1,6 +1,6 @@
 """API routes for Trade Tickets and Real Executions."""
 
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -39,11 +39,13 @@ def _serialize_ticket(ticket: TicketRecord, offset: float | None = None) -> Tick
     if not profile and settings.brokers:
         profile = settings.brokers[0]
 
+    t_side: Any = ticket.side
+    t_status: Any = ticket.status
     t_engine = TradeTicket(
         id=ticket.id,
         signal_id=ticket.signal_id,
         symbol=ticket.symbol,
-        side=ticket.side,  # type: ignore[arg-type]
+        side=t_side,
         strategy=ticket.strategy,
         score=ticket.score,
         source=ticket.source,
@@ -62,7 +64,7 @@ def _serialize_ticket(ticket: TicketRecord, offset: float | None = None) -> Tick
         reasons=ticket.reasons or [],
         risks=ticket.risks or [],
         valid_until=ticket.valid_until,
-        status=ticket.status,  # type: ignore[arg-type]
+        status=t_status,
         broker_offset=offset if offset is not None else ticket.broker_offset,
         broker_profile=ticket.broker_profile or (profile.name if profile else None),
         suggested_lot=ticket.suggested_lot,

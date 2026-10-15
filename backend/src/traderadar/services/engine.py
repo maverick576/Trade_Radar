@@ -205,9 +205,8 @@ async def process_closed_candle(
                 created_at=p_rec.created_at,
             )
             # Check opposite STRONG signal
-            is_opp = (
-                (p_state.side == "LONG" and analysis.verdict == "STRONG_SHORT")
-                or (p_state.side == "SHORT" and analysis.verdict == "STRONG_LONG")
+            is_opp = (p_state.side == "LONG" and analysis.verdict == "STRONG_SHORT") or (
+                p_state.side == "SHORT" and analysis.verdict == "STRONG_LONG"
             )
             if is_opp:
                 updated_trade = close_paper_trade_opposite(

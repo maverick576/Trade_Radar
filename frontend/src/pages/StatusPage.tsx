@@ -308,19 +308,57 @@ export const StatusPage: React.FC = () => {
             <span>AI Gemini & Bot Telegram</span>
           </h2>
           <div className="space-y-3">
-            <div className="p-3 rounded-btn bg-surface-2 border border-border">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold text-fg">Google Gemini (3.8 Flash)</span>
-                <Badge variant="accent">Rate Limit: 5 RPM / 100 RPD</Badge>
-              </div>
-              <div className="w-full bg-surface h-2 rounded-full overflow-hidden border border-border mb-1">
-                <div className="bg-accent h-full rounded-full transition-all duration-300" style={{ width: "8%" }} />
-              </div>
-              <div className="flex items-center justify-between text-[11px] text-muted">
-                <span>Penggunaan token hari ini</span>
-                <span className="font-mono">8 / 100 Permintaan</span>
-              </div>
-            </div>
+            {/* AI Quota Progress Card */}
+            {(() => {
+              const quota = healthData?.ai_quota as
+                | {
+                    rpd_used?: number;
+                    rpd_limit?: number;
+                    rpm_used?: number;
+                    rpm_limit?: number;
+                    provider?: string;
+                    model?: string;
+                  }
+                | undefined;
+              const rpdUsed = quota?.rpd_used ?? 0;
+              const rpdLimit = quota?.rpd_limit ?? 100;
+              const rpmUsed = quota?.rpm_used ?? 0;
+              const rpmLimit = quota?.rpm_limit ?? 5;
+              const provider = quota?.provider ?? "template";
+              const model = quota?.model ?? "template-rule-engine-v1";
+              const percent = Math.min(100, Math.round((rpdUsed / (rpdLimit || 1)) * 100));
+
+              return (
+                <div className="p-3 rounded-btn bg-surface-2 border border-border">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-semibold text-fg">
+                      {provider === "gemini"
+                        ? `Google Gemini (${model})`
+                        : provider === "claude"
+                        ? `Anthropic Claude (${model})`
+                        : "Komentar Otomatis (Template)"}
+                    </span>
+                    <Badge variant={percent > 90 ? "bear" : "accent"}>
+                      Rate Limit: {rpmLimit} RPM / {rpdLimit} RPD
+                    </Badge>
+                  </div>
+                  <div className="w-full bg-surface h-2 rounded-full overflow-hidden border border-border mb-1">
+                    <div
+                      className={`h-full rounded-full transition-all duration-300 ${
+                        percent > 90 ? "bg-rose-500" : percent > 70 ? "bg-amber-500" : "bg-accent"
+                      }`}
+                      style={{ width: `${Math.max(percent, 4)}%` }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between text-[11px] text-muted font-mono">
+                    <span>Penggunaan RPD (RPM: {rpmUsed}/{rpmLimit})</span>
+                    <span>
+                      {rpdUsed} / {rpdLimit} Permintaan ({percent}%)
+                    </span>
+                  </div>
+                </div>
+              );
+            })()}
 
             <div className="p-3 rounded-btn bg-surface-2 border border-border flex items-center justify-between">
               <div className="flex items-center gap-2.5">

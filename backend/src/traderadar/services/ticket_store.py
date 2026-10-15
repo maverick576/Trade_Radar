@@ -4,6 +4,7 @@ from datetime import datetime
 
 from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from traderadar.core.logging import get_logger
 from traderadar.core.models import BrokerCalibrationRecord, RealExecutionRecord, TicketRecord
@@ -62,8 +63,16 @@ async def save_ticket(session: AsyncSession, ticket: TradeTicket) -> TicketRecor
 
 
 async def get_ticket_by_id(session: AsyncSession, ticket_id: int) -> TicketRecord | None:
-    """Retrieve ticket by ID."""
-    return await session.get(TicketRecord, ticket_id)
+    """Retrieve ticket by ID with eager-loaded signal relation."""
+    stmt = (
+        select(TicketRecord)
+        .options(selectinload(TicketRecord.signal))
+        .where(TicketRecord.id == ticket_id)
+    )
+    res = await session.scalar(stmt)
+    if isinstance(res, TicketRecord):
+        return res
+    return None
 
 
 async def get_tickets(
@@ -79,8 +88,7 @@ async def get_tickets(
         if clean_sym == "XAU":
             clean_sym = "XAUUSD"
         stmt = stmt.where(
-            (TicketRecord.symbol == clean_sym)
-            | (TicketRecord.symbol == symbol.upper())
+            (TicketRecord.symbol == clean_sym) | (TicketRecord.symbol == symbol.upper())
         )
     if status:
         stmt = stmt.where(TicketRecord.status == status)

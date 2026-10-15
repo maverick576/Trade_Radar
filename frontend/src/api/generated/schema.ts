@@ -366,6 +366,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/analysis/{symbol}/ai": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Ai Comment Endpoint
+         * @description Retrieve the latest structured AI commentary for a symbol.
+         */
+        get: operations["get_ai_comment_endpoint_api_analysis__symbol__ai_get"];
+        put?: never;
+        /**
+         * Generate Ai Comment Endpoint
+         * @description Generate on-demand structured AI technical analysis for a symbol.
+         */
+        post: operations["generate_ai_comment_endpoint_api_analysis__symbol__ai_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/tickets": {
         parameters: {
             query?: never;
@@ -566,10 +590,313 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Stats Endpoint
+         * @description Get full trading journal statistics, KPIs, equity curve, heatmap, and breakdowns.
+         */
+        get: operations["get_stats_endpoint_api_stats_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/stats/export.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export Journal Csv Endpoint
+         * @description Export filtered trading journal as RFC 4180 CSV file.
+         */
+        get: operations["export_journal_csv_endpoint_api_stats_export_csv_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/stats/trades/{trade_id}/snapshot": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Trade Snapshot Endpoint
+         * @description Get technical analysis and 10-indicator snapshot at the time the trade was initiated.
+         */
+        get: operations["get_trade_snapshot_endpoint_api_stats_trades__trade_id__snapshot_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/briefs/latest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Latest Brief Endpoint
+         * @description Retrieve the latest Market Brief (morning or midday).
+         */
+        get: operations["get_latest_brief_endpoint_api_briefs_latest_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/briefs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Generate Brief Endpoint
+         * @description Generate a new Market Brief on-demand.
+         */
+        post: operations["generate_brief_endpoint_api_briefs_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ai/quota": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Ai Quota Endpoint
+         * @description Retrieve AI rate limits and remaining daily quota.
+         */
+        get: operations["get_ai_quota_endpoint_api_ai_quota_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get App Settings
+         * @description Retrieve current application configuration settings.
+         */
+        get: operations["get_app_settings_api_settings_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/settings/telegram/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Telegram Status
+         * @description Check Telegram bot status, configuration, and subscriber counts.
+         */
+        get: operations["get_telegram_status_api_settings_telegram_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/settings/telegram/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send Telegram Test Message
+         * @description Send a test message to all registered Telegram subscribers.
+         */
+        post: operations["send_telegram_test_message_api_settings_telegram_test_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * AIComment
+         * @description Structured AI technical commentary schema (SIGNAL_ENGINE.md §8).
+         */
+        AIComment: {
+            /**
+             * Ringkasan
+             * @description Ringkasan analisis teknikal maksimal 120 kata tanpa janji profit
+             */
+            ringkasan: string;
+            /**
+             * Bias
+             * @description Arah bias teknikal
+             * @enum {string}
+             */
+            bias: "bullish" | "bearish" | "netral";
+            /**
+             * Keyakinan
+             * @description Derajat keyakinan terhadap setup
+             * @enum {string}
+             */
+            keyakinan: "rendah" | "sedang" | "tinggi";
+            /**
+             * Setuju Dengan Engine
+             * @description Apakah sepakat dengan arah sinyal deterministic engine
+             */
+            setuju_dengan_engine: boolean;
+            /**
+             * Alasan Utama
+             * @description 2-4 butir alasan teknikal utama pendukung bias
+             */
+            alasan_utama: string[];
+            /**
+             * Risiko
+             * @description 1-3 butir risiko utama atau indikator yang bertentangan
+             */
+            risiko: string[];
+            /**
+             * Skenario Bullish
+             * @description Skenario pergerakan harga bila pembeli mendominasi
+             */
+            skenario_bullish: string;
+            /**
+             * Skenario Bearish
+             * @description Skenario pergerakan harga bila penjual mendominasi
+             */
+            skenario_bearish: string;
+            /**
+             * Level Penting
+             * @description Daftar level harga penting (harus bersumber dari data input)
+             */
+            level_penting: number[];
+            /**
+             * Invalidasi
+             * @description Kondisi atau level penembusan struktur yang membatalkan tesis
+             */
+            invalidasi: string;
+            /**
+             * Saran Manajemen
+             * @description Saran pengelolaan risiko dan money management
+             */
+            saran_manajemen: string;
+        };
+        /**
+         * AICommentResponse
+         * @description Response containing structured AI commentary and metadata.
+         */
+        AICommentResponse: {
+            /** Symbol */
+            symbol: string;
+            /** Tf */
+            tf: string;
+            comment: components["schemas"]["AIComment"];
+            /** Provider */
+            provider: string;
+            /** Model */
+            model: string;
+            /** Valid */
+            valid: boolean;
+            /** Is Fallback */
+            is_fallback: boolean;
+            /** Latency Ms */
+            latency_ms: number;
+            /**
+             * Tokens In
+             * @default 0
+             */
+            tokens_in: number;
+            /**
+             * Tokens Out
+             * @default 0
+             */
+            tokens_out: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Analysis Id */
+            analysis_id?: number | null;
+        };
+        /**
+         * AIQuotaResponse
+         * @description Current usage and quota limits for AI provider.
+         */
+        AIQuotaResponse: {
+            /** Rpm Used */
+            rpm_used: number;
+            /** Rpm Limit */
+            rpm_limit: number;
+            /** Rpm Remaining */
+            rpm_remaining: number;
+            /** Rpd Used */
+            rpd_used: number;
+            /** Rpd Limit */
+            rpd_limit: number;
+            /** Rpd Remaining */
+            rpd_remaining: number;
+            /** Provider */
+            provider: string;
+            /** Model */
+            model: string;
+        };
         /**
          * AnalysisResponse
          * @description Full confluence analysis response schema.
@@ -613,6 +940,75 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+        };
+        /**
+         * BreakdownItem
+         * @description Breakdown metrics for a specific dimension (symbol, strategy, session, verdict).
+         */
+        BreakdownItem: {
+            /** Category */
+            category: string;
+            /**
+             * Total Trades
+             * @default 0
+             */
+            total_trades: number;
+            /**
+             * Win Trades
+             * @default 0
+             */
+            win_trades: number;
+            /**
+             * Loss Trades
+             * @default 0
+             */
+            loss_trades: number;
+            /**
+             * Winrate Pct
+             * @default 0
+             */
+            winrate_pct: number;
+            /** Profit Factor */
+            profit_factor?: number | null;
+            /**
+             * Expectancy R
+             * @default 0
+             */
+            expectancy_r: number;
+            /**
+             * Avg Win R
+             * @default 0
+             */
+            avg_win_r: number;
+            /**
+             * Avg Loss R
+             * @default 0
+             */
+            avg_loss_r: number;
+            /**
+             * Total Pnl Usd
+             * @default 0
+             */
+            total_pnl_usd: number;
+            /**
+             * Total Pnl R
+             * @default 0
+             */
+            total_pnl_r: number;
+        };
+        /**
+         * BrokerSlippageItem
+         * @description Slippage breakdown per broker profile.
+         */
+        BrokerSlippageItem: {
+            /** Broker Profile */
+            broker_profile: string;
+            /** Total Executions */
+            total_executions: number;
+            /** Avg Slippage Points */
+            avg_slippage_points: number;
+            /** Total Slippage Cost Usd */
+            total_slippage_cost_usd: number;
         };
         /**
          * CalibrationRequest
@@ -759,6 +1155,32 @@ export interface components {
             notes?: string | null;
         };
         /**
+         * EquityPoint
+         * @description A data point on the cumulative equity curve.
+         */
+        EquityPoint: {
+            /** Trade Id */
+            trade_id: number;
+            /** Time */
+            time: string;
+            /** Time Wib */
+            time_wib: string;
+            /** Symbol */
+            symbol: string;
+            /** Side */
+            side: string;
+            /** Pnl R */
+            pnl_r: number;
+            /** Pnl Usd */
+            pnl_usd: number;
+            /** Cumulative R */
+            cumulative_r: number;
+            /** Cumulative Usd */
+            cumulative_usd: number;
+            /** Drawdown R */
+            drawdown_r: number;
+        };
+        /**
          * ExecuteTicketRequest
          * @description Request payload to record real trade execution.
          */
@@ -809,6 +1231,8 @@ export interface components {
             infrastructure: components["schemas"]["InfrastructureHealth"];
             /** Services */
             services: Record<string, never>;
+            /** Ai Quota */
+            ai_quota?: Record<string, never> | null;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -826,6 +1250,96 @@ export interface components {
             version: string;
             /** Time */
             time: string;
+        };
+        /**
+         * HeatmapCell
+         * @description Single cell in the Day of Week x Hour of Day (WIB) winrate heatmap.
+         */
+        HeatmapCell: {
+            /** Day Of Week */
+            day_of_week: number;
+            /** Day Name */
+            day_name: string;
+            /** Hour Wib */
+            hour_wib: number;
+            /**
+             * Total Trades
+             * @default 0
+             */
+            total_trades: number;
+            /**
+             * Win Trades
+             * @default 0
+             */
+            win_trades: number;
+            /**
+             * Winrate Pct
+             * @default 0
+             */
+            winrate_pct: number;
+            /**
+             * Total Pnl R
+             * @default 0
+             */
+            total_pnl_r: number;
+            /**
+             * Total Pnl Usd
+             * @default 0
+             */
+            total_pnl_usd: number;
+        };
+        /**
+         * IndicatorAccuracyItem
+         * @description Akurasi per indikator: performa ketika indikator searah vs berlawanan arah sinyal.
+         */
+        IndicatorAccuracyItem: {
+            /** Name */
+            name: string;
+            /**
+             * Aligned Trades
+             * @default 0
+             */
+            aligned_trades: number;
+            /**
+             * Aligned Wins
+             * @default 0
+             */
+            aligned_wins: number;
+            /**
+             * Aligned Winrate Pct
+             * @default 0
+             */
+            aligned_winrate_pct: number;
+            /**
+             * Aligned Avg R
+             * @default 0
+             */
+            aligned_avg_r: number;
+            /**
+             * Contrarian Trades
+             * @default 0
+             */
+            contrarian_trades: number;
+            /**
+             * Contrarian Wins
+             * @default 0
+             */
+            contrarian_wins: number;
+            /**
+             * Contrarian Winrate Pct
+             * @default 0
+             */
+            contrarian_winrate_pct: number;
+            /**
+             * Contrarian Avg R
+             * @default 0
+             */
+            contrarian_avg_r: number;
+            /**
+             * Net Edge Pct
+             * @default 0
+             */
+            net_edge_pct: number;
         };
         /**
          * IndicatorResult
@@ -890,6 +1404,138 @@ export interface components {
             redis: string;
         };
         /**
+         * JournalKPIs
+         * @description Core key performance indicators for a trading journal book.
+         */
+        JournalKPIs: {
+            /**
+             * Total Trades
+             * @default 0
+             */
+            total_trades: number;
+            /**
+             * Win Trades
+             * @default 0
+             */
+            win_trades: number;
+            /**
+             * Loss Trades
+             * @default 0
+             */
+            loss_trades: number;
+            /**
+             * Be Trades
+             * @default 0
+             */
+            be_trades: number;
+            /**
+             * Winrate Pct
+             * @default 0
+             */
+            winrate_pct: number;
+            /** Profit Factor */
+            profit_factor?: number | null;
+            /**
+             * Expectancy R
+             * @default 0
+             */
+            expectancy_r: number;
+            /**
+             * Avg Win R
+             * @default 0
+             */
+            avg_win_r: number;
+            /**
+             * Avg Loss R
+             * @default 0
+             */
+            avg_loss_r: number;
+            /**
+             * Risk Reward Ratio
+             * @default 0
+             */
+            risk_reward_ratio: number;
+            /**
+             * Max Drawdown R
+             * @default 0
+             */
+            max_drawdown_r: number;
+            /**
+             * Max Drawdown Usd
+             * @default 0
+             */
+            max_drawdown_usd: number;
+            /**
+             * Max Win Streak
+             * @default 0
+             */
+            max_win_streak: number;
+            /**
+             * Max Loss Streak
+             * @default 0
+             */
+            max_loss_streak: number;
+            /**
+             * Current Streak
+             * @default 0
+             */
+            current_streak: number;
+            /**
+             * Total Pnl Usd
+             * @default 0
+             */
+            total_pnl_usd: number;
+            /**
+             * Total Pnl R
+             * @default 0
+             */
+            total_pnl_r: number;
+            /**
+             * Gross Profit Usd
+             * @default 0
+             */
+            gross_profit_usd: number;
+            /**
+             * Gross Loss Usd
+             * @default 0
+             */
+            gross_loss_usd: number;
+        };
+        /**
+         * JournalResponse
+         * @description Full comprehensive journal response payload.
+         */
+        JournalResponse: {
+            /** Book */
+            book: string;
+            /** Filter Range */
+            filter_range: string;
+            /** Filter Symbol */
+            filter_symbol?: string | null;
+            /** Filter Strategy */
+            filter_strategy?: string | null;
+            kpis: components["schemas"]["JournalKPIs"];
+            compare_paper_kpis?: components["schemas"]["JournalKPIs"] | null;
+            compare_real_kpis?: components["schemas"]["JournalKPIs"] | null;
+            /** Equity Curve */
+            equity_curve?: components["schemas"]["EquityPoint"][];
+            /** R Distribution */
+            r_distribution?: components["schemas"]["RDistributionBin"][];
+            /** Heatmap */
+            heatmap?: components["schemas"]["HeatmapCell"][];
+            /** Breakdowns */
+            breakdowns?: {
+                [key: string]: components["schemas"]["BreakdownItem"][];
+            };
+            /** Indicator Accuracy */
+            indicator_accuracy?: components["schemas"]["IndicatorAccuracyItem"][];
+            /** Macro Filter Impact */
+            macro_filter_impact?: components["schemas"]["MacroFilterImpactItem"][];
+            slippage_metrics: components["schemas"]["SlippageStats"];
+            /** Trades */
+            trades?: components["schemas"]["TradeRecordItem"][];
+        };
+        /**
          * LoginRequest
          * @description Login payload with optional TOTP code.
          */
@@ -938,6 +1584,41 @@ export interface components {
             detail: string;
         };
         /**
+         * MacroFilterImpactItem
+         * @description Nilai macro filter: evaluasi sinyal terblokir vs simulasi virtual.
+         */
+        MacroFilterImpactItem: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+            /**
+             * Blocked Count
+             * @default 0
+             */
+            blocked_count: number;
+            /**
+             * Virtual Losses Prevented
+             * @default 0
+             */
+            virtual_losses_prevented: number;
+            /**
+             * Virtual Wins Missed
+             * @default 0
+             */
+            virtual_wins_missed: number;
+            /**
+             * Net R Saved
+             * @default 0
+             */
+            net_r_saved: number;
+            /**
+             * Effectiveness
+             * @default Netral
+             */
+            effectiveness: string;
+        };
+        /**
          * MacroFilterResult
          * @description Consolidated result of all macro filter checks.
          */
@@ -948,6 +1629,82 @@ export interface components {
             checks?: components["schemas"]["MacroCheck"][];
             /** Blocked By */
             blocked_by?: string[];
+        };
+        /**
+         * MarketBriefNarrative
+         * @description Complete narrative structure of the morning/midday Market Brief.
+         */
+        MarketBriefNarrative: {
+            /**
+             * Ringkasan Umum
+             * @description Resume kondisi pasar makro dan volatilitas hari ini
+             */
+            ringkasan_umum: string;
+            /**
+             * Market Sentiment
+             * @description Sentimen pasar keseluruhan (risk-on, risk-off, konsolidasi)
+             */
+            market_sentiment: string;
+            /** Symbols */
+            symbols?: {
+                [key: string]: components["schemas"]["SymbolBriefNarrative"];
+            };
+        };
+        /**
+         * MarketBriefPayload
+         * @description Complete input data aggregated for generating Market Brief.
+         */
+        MarketBriefPayload: {
+            /**
+             * Kind
+             * @default morning
+             */
+            kind: string;
+            /** Generated At */
+            generated_at: string;
+            /** High Impact News Today */
+            high_impact_news_today?: Record<string, never>[];
+            /** Symbols */
+            symbols?: {
+                [key: string]: components["schemas"]["SymbolBriefData"];
+            };
+        };
+        /**
+         * MarketBriefResponse
+         * @description Market Brief response model for latest and ondemand briefs.
+         */
+        MarketBriefResponse: {
+            /** Id */
+            id?: number | null;
+            /**
+             * Kind
+             * @default morning
+             */
+            kind: string;
+            /** Generated At */
+            generated_at: string;
+            narrative: components["schemas"]["MarketBriefNarrative"];
+            payload: components["schemas"]["MarketBriefPayload"];
+            /**
+             * Provider
+             * @default gemini
+             */
+            provider: string;
+            /**
+             * Model
+             * @default gemini-3.8-flash
+             */
+            model: string;
+            /**
+             * Is Fallback
+             * @default false
+             */
+            is_fallback: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
         };
         /**
          * MessageResponse
@@ -1054,6 +1811,18 @@ export interface components {
              * Format: date-time
              */
             updated_at: string;
+        };
+        /**
+         * RDistributionBin
+         * @description Histogram bin for R return distribution.
+         */
+        RDistributionBin: {
+            /** Range Label */
+            range_label: string;
+            /** Count */
+            count: number;
+            /** Percentage */
+            percentage: number;
         };
         /**
          * RealExecutionResponse
@@ -1177,6 +1946,46 @@ export interface components {
             total: number;
         };
         /**
+         * SlippageStats
+         * @description Real slippage metrics between planned ticket entry and actual execution fill.
+         */
+        SlippageStats: {
+            /**
+             * Total Executions
+             * @default 0
+             */
+            total_executions: number;
+            /**
+             * Avg Slippage Points
+             * @default 0
+             */
+            avg_slippage_points: number;
+            /**
+             * Median Slippage Points
+             * @default 0
+             */
+            median_slippage_points: number;
+            /**
+             * Min Slippage Points
+             * @default 0
+             */
+            min_slippage_points: number;
+            /**
+             * Max Slippage Points
+             * @default 0
+             */
+            max_slippage_points: number;
+            /**
+             * Total Slippage Cost Usd
+             * @default 0
+             */
+            total_slippage_cost_usd: number;
+            /** By Broker */
+            by_broker?: components["schemas"]["BrokerSlippageItem"][];
+            /** By Symbol */
+            by_symbol?: components["schemas"]["SymbolSlippageItem"][];
+        };
+        /**
          * StrategyBResult
          * @description Output evaluation of Triple-EMA Strategy B.
          */
@@ -1207,6 +2016,83 @@ export interface components {
              * @default
              */
             reason: string;
+        };
+        /**
+         * SymbolBriefData
+         * @description Technical snapshot data compiled for an individual symbol.
+         */
+        SymbolBriefData: {
+            /** Symbol */
+            symbol: string;
+            /**
+             * Bias H4
+             * @default NEUTRAL
+             */
+            bias_h4: string;
+            /**
+             * Bias D1
+             * @default NEUTRAL
+             */
+            bias_d1: string;
+            /**
+             * Score M15
+             * @default 0
+             */
+            score_m15: number;
+            /**
+             * Verdict M15
+             * @default NEUTRAL
+             */
+            verdict_m15: string;
+            /** Last Price */
+            last_price: number;
+            /** Vwap Yesterday */
+            vwap_yesterday?: number | null;
+            /** Daily High */
+            daily_high: number;
+            /** Daily Low */
+            daily_low: number;
+            /** Swing H4 */
+            swing_h4?: number | null;
+            /** Supertrend H1 */
+            supertrend_h1?: number | null;
+            /** Active Ticket */
+            active_ticket?: Record<string, never> | null;
+            /** Stats 7D */
+            stats_7d?: Record<string, never> | null;
+        };
+        /**
+         * SymbolBriefNarrative
+         * @description Narrative commentary for an individual symbol in the Market Brief.
+         */
+        SymbolBriefNarrative: {
+            /** Symbol */
+            symbol: string;
+            /**
+             * Bias
+             * @enum {string}
+             */
+            bias: "bullish" | "bearish" | "netral";
+            /**
+             * Ringkasan
+             * @description Narasi teknikal simbol maksimal 200 kata
+             */
+            ringkasan: string;
+            /**
+             * Level Kunci
+             * @description Level harga krusial hari ini (VWAP kemarin, high/low, dll.)
+             */
+            level_kunci: number[];
+            /**
+             * Skenario
+             * @description Skenario aksi trading yang perlu diperhatikan
+             */
+            skenario: string;
+            /**
+             * Fokus Perhatian
+             * @description Fokus katalis atau konfluensi utama
+             */
+            fokus_perhatian: string;
         };
         /**
          * SymbolItem
@@ -1240,12 +2126,50 @@ export interface components {
             gold_status?: Record<string, never> | null;
         };
         /**
+         * SymbolSlippageItem
+         * @description Slippage breakdown per symbol.
+         */
+        SymbolSlippageItem: {
+            /** Symbol */
+            symbol: string;
+            /** Total Executions */
+            total_executions: number;
+            /** Avg Slippage Points */
+            avg_slippage_points: number;
+            /** Total Slippage Cost Usd */
+            total_slippage_cost_usd: number;
+        };
+        /**
          * SymbolsResponse
          * @description List of active symbols.
          */
         SymbolsResponse: {
             /** Symbols */
             symbols: components["schemas"]["SymbolItem"][];
+        };
+        /** TelegramStatusResponse */
+        TelegramStatusResponse: {
+            /** Enabled */
+            enabled: boolean;
+            /** Configured */
+            configured: boolean;
+            /** Allowed Chat Ids Count */
+            allowed_chat_ids_count: number;
+            /** Active Chat Ids Count */
+            active_chat_ids_count: number;
+            /** Allowed Chat Ids */
+            allowed_chat_ids: number[];
+            /** Status */
+            status: string;
+        };
+        /** TelegramTestMessageResponse */
+        TelegramTestMessageResponse: {
+            /** Success */
+            success: boolean;
+            /** Sent Count */
+            sent_count: number;
+            /** Message */
+            message: string;
         };
         /**
          * TicketResponse
@@ -1365,6 +2289,124 @@ export interface components {
             secret: string;
             /** Code */
             code: string;
+        };
+        /**
+         * TradeAnalysisSnapshotResponse
+         * @description Full snapshot of the technical analysis when the trade was initiated.
+         */
+        TradeAnalysisSnapshotResponse: {
+            /** Trade Id */
+            trade_id: number;
+            /** Symbol */
+            symbol: string;
+            /** Tf */
+            tf: string;
+            /** Bar Time */
+            bar_time: string;
+            /** Score */
+            score: number;
+            /** Verdict */
+            verdict: string;
+            /** Indicators */
+            indicators: Record<string, never>[];
+            /** Counts */
+            counts: Record<string, never>;
+            /** Category Votes */
+            category_votes: Record<string, never>;
+            /** Macro */
+            macro: Record<string, never>;
+            /** Htf */
+            htf: Record<string, never>;
+            /** Strategy B */
+            strategy_b: Record<string, never>;
+            /** Weights Version */
+            weights_version: string;
+        };
+        /**
+         * TradeRecordItem
+         * @description Normalized single trade item representation for journal.
+         */
+        TradeRecordItem: {
+            /** Id */
+            id: number;
+            /** Ticket Id */
+            ticket_id?: number | null;
+            /** Signal Id */
+            signal_id?: number | null;
+            /** Analysis Id */
+            analysis_id?: number | null;
+            /**
+             * Book
+             * @default paper
+             */
+            book: string;
+            /** Symbol */
+            symbol: string;
+            /** Strategy */
+            strategy: string;
+            /** Side */
+            side: string;
+            /**
+             * Entry Time
+             * Format: date-time
+             */
+            entry_time: string;
+            /** Entry Time Wib */
+            entry_time_wib: string;
+            /** Entry Price */
+            entry_price: number;
+            /** Exit Time */
+            exit_time?: string | null;
+            /** Exit Time Wib */
+            exit_time_wib?: string | null;
+            /** Exit Price */
+            exit_price?: number | null;
+            /** Exit Reason */
+            exit_reason?: string | null;
+            /**
+             * Bars Held
+             * @default 0
+             */
+            bars_held: number;
+            /**
+             * Pnl Usd
+             * @default 0
+             */
+            pnl_usd: number;
+            /**
+             * Pnl R
+             * @default 0
+             */
+            pnl_r: number;
+            /**
+             * Fees Usd
+             * @default 0
+             */
+            fees_usd: number;
+            /**
+             * Slippage Points
+             * @default 0
+             */
+            slippage_points: number;
+            /**
+             * Verdict
+             * @default NEUTRAL
+             */
+            verdict: string;
+            /**
+             * Session
+             * @default Asia
+             */
+            session: string;
+            /** Broker Profile */
+            broker_profile?: string | null;
+            /**
+             * Is Virtual
+             * @default false
+             */
+            is_virtual: boolean;
+            /** Notes */
+            notes?: string | null;
         };
         /**
          * UserOut
@@ -2003,6 +3045,82 @@ export interface operations {
             };
         };
     };
+    get_ai_comment_endpoint_api_analysis__symbol__ai_get: {
+        parameters: {
+            query?: {
+                /** @description Timeframe e.g. M15 */
+                tf?: string;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                symbol: string;
+            };
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AICommentResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    generate_ai_comment_endpoint_api_analysis__symbol__ai_post: {
+        parameters: {
+            query?: {
+                /** @description Timeframe e.g. M15 */
+                tf?: string;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                symbol: string;
+            };
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AICommentResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_tickets_api_tickets_get: {
         parameters: {
             query?: {
@@ -2365,6 +3483,336 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PaperTradeResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_stats_endpoint_api_stats_get: {
+        parameters: {
+            query?: {
+                /** @description Trading book to analyze: paper, real, or compare */
+                book?: string;
+                /** @description Time range filter preset: 7d, 30d, 90d, all, or custom */
+                range?: string;
+                /** @description Optional symbol filter */
+                symbol?: string | null;
+                /** @description Optional strategy filter */
+                strategy?: string | null;
+                /** @description Start datetime for custom range (UTC) */
+                from_dt?: string | null;
+                /** @description End datetime for custom range (UTC) */
+                to_dt?: string | null;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JournalResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_journal_csv_endpoint_api_stats_export_csv_get: {
+        parameters: {
+            query?: {
+                /** @description Trading book to export: paper, real, or compare */
+                book?: string;
+                /** @description Time range filter preset: 7d, 30d, 90d, all, or custom */
+                range?: string;
+                /** @description Optional symbol filter */
+                symbol?: string | null;
+                /** @description Optional strategy filter */
+                strategy?: string | null;
+                /** @description Start datetime for custom range (UTC) */
+                from_dt?: string | null;
+                /** @description End datetime for custom range (UTC) */
+                to_dt?: string | null;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_trade_snapshot_endpoint_api_stats_trades__trade_id__snapshot_get: {
+        parameters: {
+            query?: {
+                book?: string;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                trade_id: number;
+            };
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TradeAnalysisSnapshotResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_latest_brief_endpoint_api_briefs_latest_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MarketBriefResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    generate_brief_endpoint_api_briefs_post: {
+        parameters: {
+            query?: {
+                /** @description Brief kind e.g. morning, midday, ondemand */
+                kind?: string;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MarketBriefResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_ai_quota_endpoint_api_ai_quota_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AIQuotaResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_app_settings_api_settings_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_telegram_status_api_settings_telegram_status_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TelegramStatusResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    send_telegram_test_message_api_settings_telegram_test_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TelegramTestMessageResponse"];
                 };
             };
             /** @description Validation Error */

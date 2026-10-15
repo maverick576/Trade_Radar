@@ -38,15 +38,13 @@ const getBaseUrl = (): string => {
 /**
  * Singleton API client for making backend REST calls.
  */
-export const api = createClient<paths>({
+export const apiClient = createClient<paths>({
   baseUrl: getBaseUrl(),
   credentials: "include",
   fetch: (request) => globalThis.fetch(request),
 });
 
-api.use(csrfMiddleware);
-
-export const apiClient = api;
+apiClient.use(csrfMiddleware);
 
 export type UserProfile =
   paths["/api/auth/me"]["get"]["responses"][200]["content"]["application/json"];
@@ -81,3 +79,94 @@ export type PaperAccountResponse =
   paths["/api/paper/account"]["get"]["responses"][200]["content"]["application/json"];
 export type ClosePaperTradePayload =
   paths["/api/paper/trades/{trade_id}/close"]["post"]["requestBody"]["content"]["application/json"];
+export type AICommentResponse =
+  paths["/api/analysis/{symbol}/ai"]["get"]["responses"][200]["content"]["application/json"];
+export type AIComment = AICommentResponse["comment"];
+export type MarketBriefResponse =
+  paths["/api/briefs/latest"]["get"]["responses"][200]["content"]["application/json"];
+export type AIQuotaResponse =
+  paths["/api/ai/quota"]["get"]["responses"][200]["content"]["application/json"];
+export type JournalResponse =
+  paths["/api/stats"]["get"]["responses"][200]["content"]["application/json"];
+export type TradeRecordItem = JournalResponse["trades"][number];
+export type JournalKPIs = JournalResponse["kpis"];
+export type EquityPoint = JournalResponse["equity_curve"][number];
+export type HeatmapCell = JournalResponse["heatmap"][number];
+export type BreakdownItem = JournalResponse["breakdowns"][string][number];
+export type IndicatorAccuracyItem = JournalResponse["indicator_accuracy"][number];
+export type MacroFilterImpactItem = JournalResponse["macro_filter_impact"][number];
+export type SlippageStats = JournalResponse["slippage_metrics"];
+export type TradeAnalysisSnapshotResponse =
+  paths["/api/stats/trades/{trade_id}/snapshot"]["get"]["responses"][200]["content"]["application/json"];
+
+export type JournalBookType = "paper" | "real" | "compare";
+
+export const getJournalStats = async (params: {
+  book?: string;
+  symbol?: string;
+  strategy?: string;
+  date_from?: string;
+  date_to?: string;
+}): Promise<JournalResponse> => {
+  const res = await apiClient.GET("/api/stats", {
+    params: {
+      query: {
+        book: params.book as "paper" | "real" | "compare" | undefined,
+        symbol: params.symbol,
+        strategy: params.strategy,
+        date_from: params.date_from,
+        date_to: params.date_to,
+      },
+    },
+  });
+  if (res.error) throw new Error(String(res.error));
+  return res.data as JournalResponse;
+};
+
+export const getTradeSnapshot = async (
+  tradeId: string
+): Promise<TradeAnalysisSnapshotResponse> => {
+  const res = await apiClient.GET("/api/stats/trades/{trade_id}/snapshot", {
+    params: {
+      path: { trade_id: tradeId },
+    },
+  });
+  if (res.error) throw new Error(String(res.error));
+  return res.data as TradeAnalysisSnapshotResponse;
+};
+
+export const exportJournalCsv = async (params: {
+  book?: string;
+  symbol?: string;
+  strategy?: string;
+  date_from?: string;
+  date_to?: string;
+}): Promise<void> => {
+  const searchParams = new URLSearchParams();
+  if (params.book) searchParams.set("book", params.book);
+  if (params.symbol) searchParams.set("symbol", params.symbol);
+  if (params.strategy) searchParams.set("strategy", params.strategy);
+  if (params.date_from) searchParams.set("date_from", params.date_from);
+  if (params.date_to) searchParams.set("date_to", params.date_to);
+
+  const url = `${getBaseUrl()}/api/stats/export.csv?${searchParams.toString()}`;
+  const res = await globalThis.fetch(url, { credentials: "include" });
+  if (!res.ok) throw new Error(`Gagal ekspor CSV: ${res.statusText}`);
+  const blob = await res.blob();
+  const downloadUrl = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = downloadUrl;
+  a.download = `traderadar_journal_${params.book || "paper"}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  window.URL.revokeObjectURL(downloadUrl);
+};
+
+export const api = Object.assign(apiClient, {
+  getJournalStats,
+  getTradeSnapshot,
+  exportJournalCsv,
+});
+
+

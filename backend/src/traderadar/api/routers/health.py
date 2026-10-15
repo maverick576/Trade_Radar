@@ -38,6 +38,7 @@ class FullHealthResponse(BaseModel):
     timestamp: str
     infrastructure: InfrastructureHealth
     services: dict[str, Any]
+    ai_quota: dict[str, Any] | None = None
 
 
 @router.get("/health", response_model=HealthResponse)
@@ -73,6 +74,32 @@ async def get_full_health() -> FullHealthResponse:
     infra_ok = db_ok and redis_ok
     overall_status = "healthy" if infra_ok else "degraded"
 
+    ai_quota = None
+    if redis_ok:
+        try:
+            from traderadar.ai.ratelimit import AIRateLimiter
+            from traderadar.core.redis import get_redis
+
+            r_client = get_redis()
+            limiter = AIRateLimiter(r_client, settings.env.AI_MAX_RPM, settings.env.AI_MAX_RPD)
+            stats = await limiter.get_quota_stats()
+            provider = settings.env.AI_PROVIDER
+            if provider == "gemini" and not settings.env.GEMINI_API_KEY:
+                provider = "template"
+            elif provider == "claude" and not settings.env.ANTHROPIC_API_KEY:
+                provider = "template"
+            stats["provider"] = provider
+            stats["model"] = (
+                settings.env.GEMINI_MODEL
+                if provider == "gemini"
+                else (
+                    settings.env.CLAUDE_MODEL if provider == "claude" else "template-rule-engine-v1"
+                )
+            )
+            ai_quota = stats
+        except Exception:
+            pass
+
     return FullHealthResponse(
         status=overall_status,
         version=settings.env.APP_VERSION,
@@ -82,4 +109,5 @@ async def get_full_health() -> FullHealthResponse:
             redis="healthy" if redis_ok else "unreachable",
         ),
         services=service_statuses,
+        ai_quota=ai_quota,
     )

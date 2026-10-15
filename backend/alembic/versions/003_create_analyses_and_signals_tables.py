@@ -8,8 +8,9 @@ Create Date: 2026-10-15 15:00:00.000000
 from collections.abc import Sequence
 
 import sqlalchemy as sa
-from alembic import op
 from sqlalchemy.dialects import postgresql
+
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "003_create_analyses_and_signals_tables"

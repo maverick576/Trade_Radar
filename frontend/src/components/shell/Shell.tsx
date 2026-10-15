@@ -10,6 +10,8 @@ import { DashboardPage } from "../../pages/DashboardPage";
 import { AnalisaPage } from "../../pages/AnalisaPage";
 import { TicketPage } from "../../pages/TicketPage";
 import { PaperPage } from "../../pages/PaperPage";
+import { BriefPage } from "../../pages/BriefPage";
+import { JurnalPage } from "../../pages/JurnalPage";
 
 export const Shell: React.FC = () => {
   const [currentNav, setCurrentNav] = useState<NavItem>("dashboard");
@@ -96,6 +98,10 @@ export const Shell: React.FC = () => {
               <TicketPage initialSymbol={currentSymbol} />
             ) : currentNav === "paper" ? (
               <PaperPage />
+            ) : currentNav === "jurnal" ? (
+              <JurnalPage />
+            ) : currentNav === "brief" ? (
+              <BriefPage />
             ) : currentNav === "status" ? (
               <StatusPage />
             ) : (

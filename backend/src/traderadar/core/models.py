@@ -201,6 +201,9 @@ class AnalysisRecord(Base):
     signals: Mapped[list["SignalRecord"]] = relationship(
         "SignalRecord", back_populates="analysis", cascade="all, delete-orphan"
     )
+    ai_comments: Mapped[list["AICommentRecord"]] = relationship(
+        "AICommentRecord", back_populates="analysis", cascade="all, delete-orphan"
+    )
 
     __table_args__ = (
         UniqueConstraint("symbol", "tf", "bar_time", name="uq_analyses_symbol_tf_bar_time"),
@@ -302,9 +305,7 @@ class TicketRecord(Base):
         DateTime(timezone=True), nullable=False, default=utc_now, onupdate=utc_now
     )
 
-    signal: Mapped["SignalRecord | None"] = relationship(
-        "SignalRecord", back_populates="ticket"
-    )
+    signal: Mapped["SignalRecord | None"] = relationship("SignalRecord", back_populates="ticket")
     executions: Mapped[list["RealExecutionRecord"]] = relationship(
         "RealExecutionRecord", back_populates="ticket", cascade="all, delete-orphan"
     )
@@ -336,9 +337,7 @@ class RealExecutionRecord(Base):
     pnl_r: Mapped[float | None] = mapped_column(Float, nullable=True)
     slippage_points: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
     notes: Mapped[str | None] = mapped_column(String(500), nullable=True)
-    source: Mapped[str] = mapped_column(
-        String(32), nullable=False, default="ui"
-    )  # ui | telegram
+    source: Mapped[str] = mapped_column(String(32), nullable=False, default="ui")  # ui | telegram
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=utc_now
     )
@@ -346,9 +345,7 @@ class RealExecutionRecord(Base):
         DateTime(timezone=True), nullable=False, default=utc_now, onupdate=utc_now
     )
 
-    ticket: Mapped["TicketRecord"] = relationship(
-        "TicketRecord", back_populates="executions"
-    )
+    ticket: Mapped["TicketRecord"] = relationship("TicketRecord", back_populates="executions")
 
 
 class PaperTradeRecord(Base):
@@ -389,9 +386,7 @@ class PaperTradeRecord(Base):
     fees_usd: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
     mfe_r: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
     mae_r: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
-    is_virtual: Mapped[bool] = mapped_column(
-        Boolean, index=True, nullable=False, default=False
-    )
+    is_virtual: Mapped[bool] = mapped_column(Boolean, index=True, nullable=False, default=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=utc_now
     )
@@ -425,4 +420,71 @@ class BrokerCalibrationRecord(Base):
     )
     expires_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), index=True, nullable=False
+    )
+
+
+class MarketBriefRecord(Base):
+    """Daily market brief summary (BLUEPRINT.md §5.4)."""
+
+    __tablename__ = "market_briefs"
+
+    id: Mapped[int] = mapped_column(
+        Integer().with_variant(BigInteger, "postgresql"), primary_key=True, autoincrement=True
+    )
+    kind: Mapped[str] = mapped_column(
+        String(32), index=True, nullable=False, default="morning"
+    )  # morning | midday | ondemand
+    generated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), index=True, nullable=False, default=utc_now
+    )
+    payload: Mapped[dict[str, Any]] = mapped_column(
+        JSON().with_variant(JSONB, "postgresql"), nullable=False
+    )
+    narrative: Mapped[dict[str, Any]] = mapped_column(
+        JSON().with_variant(JSONB, "postgresql"), nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=utc_now
+    )
+
+    ai_comments: Mapped[list["AICommentRecord"]] = relationship(
+        "AICommentRecord", back_populates="brief", cascade="all, delete-orphan"
+    )
+
+
+class AICommentRecord(Base):
+    """Structured AI commentary and brief narratives (SIGNAL_ENGINE.md §8)."""
+
+    __tablename__ = "ai_comments"
+
+    id: Mapped[int] = mapped_column(
+        Integer().with_variant(BigInteger, "postgresql"), primary_key=True, autoincrement=True
+    )
+    analysis_id: Mapped[int | None] = mapped_column(
+        BigInteger, ForeignKey("analyses.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    brief_id: Mapped[int | None] = mapped_column(
+        BigInteger, ForeignKey("market_briefs.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    kind: Mapped[str] = mapped_column(
+        String(32), index=True, nullable=False, default="analysis"
+    )  # analysis | brief | ondemand
+    provider: Mapped[str] = mapped_column(String(32), nullable=False)  # gemini | claude | template
+    model: Mapped[str] = mapped_column(String(64), nullable=False)
+    content: Mapped[dict[str, Any]] = mapped_column(
+        JSON().with_variant(JSONB, "postgresql"), nullable=False
+    )
+    valid: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    latency_ms: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    tokens_in: Mapped[int | None] = mapped_column(Integer, nullable=True, default=0)
+    tokens_out: Mapped[int | None] = mapped_column(Integer, nullable=True, default=0)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), index=True, nullable=False, default=utc_now
+    )
+
+    analysis: Mapped["AnalysisRecord | None"] = relationship(
+        "AnalysisRecord", back_populates="ai_comments"
+    )
+    brief: Mapped["MarketBriefRecord | None"] = relationship(
+        "MarketBriefRecord", back_populates="ai_comments"
     )

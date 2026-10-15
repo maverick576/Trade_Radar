@@ -31,6 +31,9 @@ dependencies = [
     "pyotp>=2.9.0",
     "cryptography>=44.0.0",
     "email-validator>=2.0.0",
+    "python-telegram-bot>=21.11.1,<22.0.0",
+    "mplfinance>=0.12.10b0",
+    "matplotlib>=3.11.2",
 ]
 
 [project.optional-dependencies]
@@ -84,7 +87,7 @@ no_implicit_reexport = true
 plugins = ["pydantic.mypy"]
 
 [[tool.mypy.overrides]]
-module = "pandas"
+module = ["pandas", "mplfinance", "matplotlib", "matplotlib.*"]
 ignore_missing_imports = true
 
 [dependency-groups]

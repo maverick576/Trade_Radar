@@ -12,7 +12,6 @@ import {
   Brain,
   Smile,
   Zap,
-  Sparkles,
 } from "lucide-react";
 import type { UTCTimestamp } from "lightweight-charts";
 import {
@@ -28,6 +27,7 @@ import { MacroChecklist, type MacroCheckItem } from "../components/ui/MacroCheck
 import { StrategyBPanel, type StrategyBData } from "../components/ui/StrategyBPanel";
 import { useMarket } from "../context/MarketContext";
 import { TicketCard } from "../features/tickets/TicketCard";
+import { AICommentPanel } from "../features/analysis/AICommentPanel";
 import {
   apiClient,
   type CandleItem,
@@ -706,23 +706,8 @@ export const AnalisaPage: React.FC<AnalisaPageProps> = ({
             </div>
           )}
 
-          {/* AI Commentary Teaser (Fase 6) */}
-          <div className="p-4 rounded-xl bg-surface border border-border shadow-sm space-y-3">
-            <div className="flex items-center justify-between border-b border-border/60 pb-2.5">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-purple-400" />
-                <h3 className="text-sm font-bold text-fg tracking-wide">
-                  Tanggapan AI (Gemini 3.8 Flash)
-                </h3>
-              </div>
-              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/10 border border-purple-500/20 text-purple-400 font-mono">
-                Fase 6
-              </span>
-            </div>
-            <p className="text-xs text-muted leading-relaxed">
-              Analisis naratif terstruktur (bias, keyakinan, risiko, skenario bullish/bearish, dan kondisi invalidasi) berbasis output matematis deterministik.
-            </p>
-          </div>
+          {/* AI Commentary Panel */}
+          <AICommentPanel symbol={symbol} tf={selectedTf} />
         </div>
       </div>
 

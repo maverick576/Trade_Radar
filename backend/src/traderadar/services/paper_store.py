@@ -82,8 +82,7 @@ async def get_paper_trades(
         if clean_sym == "XAU":
             clean_sym = "XAUUSD"
         stmt = stmt.where(
-            (PaperTradeRecord.symbol == clean_sym)
-            | (PaperTradeRecord.symbol == symbol.upper())
+            (PaperTradeRecord.symbol == clean_sym) | (PaperTradeRecord.symbol == symbol.upper())
         )
     if status:
         stmt = stmt.where(PaperTradeRecord.status == status)
@@ -195,9 +194,7 @@ async def get_paper_account_metrics(
     start_of_day_wib = now_wib.replace(hour=0, minute=0, second=0, microsecond=0)
     start_of_day_utc = start_of_day_wib.astimezone(ZoneInfo("UTC"))
 
-    daily_trades = [
-        t for t in closed_trades if t.exit_time and t.exit_time >= start_of_day_utc
-    ]
+    daily_trades = [t for t in closed_trades if t.exit_time and t.exit_time >= start_of_day_utc]
     daily_pnl_usd = sum((t.pnl_usd or 0.0) for t in daily_trades)
     daily_loss_limit_hit = daily_pnl_usd <= -(initial_equity * (daily_loss_limit_pct / 100.0))
 
@@ -211,9 +208,7 @@ async def get_paper_account_metrics(
     wins = [t for t in closed_trades if (t.pnl_r or 0.0) > 0]
     winrate = (len(wins) / len(closed_trades) * 100.0) if closed_trades else 0.0
     avg_r = (
-        sum((t.pnl_r or 0.0) for t in closed_trades) / len(closed_trades)
-        if closed_trades
-        else 0.0
+        sum((t.pnl_r or 0.0) for t in closed_trades) / len(closed_trades) if closed_trades else 0.0
     )
 
     return {

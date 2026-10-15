@@ -35,6 +35,9 @@ def get_redis() -> aioredis.Redis:
     return _redis_client
 
 
+get_redis_client = get_redis
+
+
 @asynccontextmanager
 async def get_redis_context() -> AsyncGenerator[aioredis.Redis, None]:
     """Context manager for obtaining Redis client."""

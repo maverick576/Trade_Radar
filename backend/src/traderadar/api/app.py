@@ -8,7 +8,21 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from traderadar.api.routers import analysis, auth, calibrations, health, market, paper, tickets, ws
+from traderadar.api.routers import (
+    analysis,
+    auth,
+    briefs,
+    calibrations,
+    health,
+    market,
+    paper,
+    stats,
+    tickets,
+    ws,
+)
+from traderadar.api.routers import (
+    settings as settings_router,
+)
 from traderadar.core.config import get_settings
 from traderadar.core.db import close_db, ping_db
 from traderadar.core.logging import get_logger, setup_logging
@@ -174,6 +188,9 @@ def create_app() -> FastAPI:
     app.include_router(tickets.router, prefix="/api")
     app.include_router(calibrations.router, prefix="/api")
     app.include_router(paper.router, prefix="/api")
+    app.include_router(stats.router, prefix="/api")
+    app.include_router(briefs.router, prefix="/api")
+    app.include_router(settings_router.router, prefix="/api")
     app.include_router(ws.router)
 
     return app

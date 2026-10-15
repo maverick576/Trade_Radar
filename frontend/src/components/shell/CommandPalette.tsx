@@ -158,6 +158,13 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       handler: () => onNavigate("analisa"),
     },
     {
+      id: "act-brief-gen",
+      title: "Buat Market Brief Baru (On-demand)",
+      category: "Aksi Cepat",
+      icon: Newspaper,
+      handler: () => onNavigate("brief"),
+    },
+    {
       id: "act-calib",
       title: "Kalibrasi Harga Broker Terhadap Sumber",
       category: "Aksi Cepat",

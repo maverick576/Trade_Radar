@@ -50,14 +50,14 @@ Estimasi: ±14–18 sesi agent.
 - **Selesai bila:** test ticket & paper lulus; contoh di `BLUEPRINT.md` §5.3 direproduksi persis oleh test (entry 2651, SL 2636,5, TP 2665,5/2680, 0,06 lot untuk $10.000).
 
 ## Fase 6 — Komentar AI & Market Brief
-- [ ] `ai/` provider Gemini (structured output) + template + Claude opsional; rate limit Redis; cache; validasi angka; job arq.
-- [ ] Market Brief pagi 06:45 WIB (+ siang opsional) via scheduler; halaman Brief.
-- [ ] Panel Tanggapan AI di Analisa; kuota di Status.
+- [x] `ai/` provider Gemini (structured output) + template + Claude opsional; rate limit Redis; cache; validasi angka; job arq.
+- [x] Market Brief pagi 06:45 WIB (+ siang opsional) via scheduler; halaman Brief.
+- [x] Panel Tanggapan AI di Analisa; kuota di Status.
 - **Selesai bila:** komentar ≤ 15 dtk; tanpa API key → template + badge; test angka karangan → fallback.
 
 ## Fase 7 — Telegram dua arah
-- [ ] Bot long polling + whitelist, semua perintah (`BLUEPRINT.md` §5.8), pesan ticket + chart PNG + tombol inline, alur "Saya eksekusi" (minta harga fill), `/kalibrasi`.
-- [ ] Notifikasi: ticket, TP/SL paper, ticket expired, status sistem, Brief, rekap 22:00 WIB.
+- [x] Bot long polling + whitelist, semua perintah (`BLUEPRINT.md` §5.8), pesan ticket + chart PNG + tombol inline, alur "Saya eksekusi" (minta harga fill), `/kalibrasi`.
+- [x] Notifikasi: ticket, TP/SL paper, ticket expired, status sistem, Brief, rekap 22:00 WIB.
 - **Selesai bila:** `/analisa XAUUSD` membalas teks + gambar ≤ 20 dtk; eksekusi via Telegram muncul di Jurnal Real; chat tak terdaftar diabaikan.
 
 ## Fase 8 — Jurnal & statistik

@@ -3,6 +3,100 @@
 Semua perubahan penting pada TradeRadar didokumentasikan di file ini.
 Format mengikuti panduan [Keep a Changelog](https://keepachangelog.com/id/1.0.0/).
 
+## [Fase 7: Telegram Dua Arah] - 2026-10-15
+
+### Ditambahkan
+- **TradeRadar Telegram Bot Engine (`traderadar.telegram`):**
+  - **Arsitektur Long Polling & Lifespan Service (`bot.py`, `services/telegram.py`):** Integrasi `python-telegram-bot` v21.11 async tanpa dependency webhook/ngrok, berjalan mandiri dan tangguh di container Docker.
+  - **Keamanan Whitelist Berlapis (`whitelist.py`):** Pembatasan akses berbasis `TELEGRAM_ALLOWED_CHAT_IDS`. Chat ID tidak terdaftar otomatis diabaikan tanpa memproses perintah atau membocorkan data. Persistensi status pendaftaran dan preferensi jeda notifikasi (`is_paused`) di tabel database `telegram_chats`.
+  - **Suite Perintah Lengkap Bahasa Indonesia (`handlers.py`):**
+    - `/start`: Sambutan, Chat ID unik, verifikasi whitelist, dan *financial disclaimer* wajib.
+    - `/help`: Panduan ringkas daftar perintah trading dan eksekusi.
+    - `/analisa <SIMBOL> [TF]`: Analisis konfluensi multi-indikator real-time dengan chart candlestick resolusi tinggi dan ulasan AI kontekstual (<= 20 detik).
+    - `/ticket`: Daftar Trade Ticket aktif yang siap dieksekusi manual.
+    - `/kalibrasi <SIMBOL> <HARGA>`: Kalibrasi offset harga broker pengguna (berlaku 4 jam).
+    - `/eksekusi <id> <harga> <lot>`: Pencatatan eksekusi manual langsung ke Jurnal Real.
+    - `/tutup <id> <harga>`: Penutupan trade real dengan kalkulasi otomatis PnL USD dan R-multiple.
+    - `/posisi`: Pemantauan posisi terbuka Paper Trading secara live.
+    - `/winrate [7d|30d|all] [paper|real]`: Metrik performa winrate, profit factor, dan expectancy.
+    - `/kalender`: Agenda berita ekonomi High-Impact 48 jam ke depan.
+    - `/pause` & `/resume`: Penyetelan jeda/aktif notifikasi per pengguna.
+- **Headless Candlestick Chart PNG Generator (`charts.py`):**
+  - Rendering grafik candlestick gelap (`#0B0E14`) menggunakan `mplfinance` dan `matplotlib` (backend `Agg`) berkecepatan tinggi (<= 300 ms).
+  - Overlay Triple EMA (8, 21, 55), panel volume, dan level garis horizontal berwarna untuk Entry, SL, TP1, dan TP2.
+- **Rich Ticket Broadcast & Alur Eksekusi Interaktif (`notifier.py`):**
+  - Dispatcher tiket baru menunggu hingga 20 detik untuk ulasan AI agar terkirim dalam satu pesan terpadu.
+  - Tiket disiarkan dengan grafik PNG, teks caption Markdown terstruktur, dan inline keyboard: `[✅ Saya eksekusi]`, `[⏭ Lewati]`, `[📊 Detail]`.
+  - Alur "Saya eksekusi" interaktif 2 tahap menggunakan status pending di Redis (`tg:pending_exec:{chat_id}`), mencatat harga fill & lot ke `real_executions` dengan `source="telegram"`.
+- **Sistem Notifikasi Proaktif Background:**
+  - Siaran real-time exit posisi paper trading (TP1 hit, TP2 hit, SL hit, time stop).
+  - Notifikasi pembatalan/tiket kedaluwarsa setelah batas waktu validasi habis.
+  - Broadcast Market Brief harian otomatis setiap 06:45 WIB.
+  - Rekap Kinerja Harian otomatis setiap 22:00 WIB (ringkasan paper trade & real trade hari ini).
+  - Peringatan sistem saat koneksi data feed degraded atau recovered.
+- **Settings & Telegram Diagnostics API (`routers/settings.py`):**
+  - `GET /api/settings`: Konfigurasi umum aplikasi.
+  - `GET /api/settings/telegram/status`: Status bot, konfigurasi token, jumlah pelanggan aktif, dan whitelist.
+  - `POST /api/settings/telegram/test`: Pengujian pengiriman pesan diagnostik ke seluruh subscriber Telegram.
+- **Pengujian & Verifikasi Kualitas:**
+  - 31 unit test khusus modul Telegram (whitelist, message formatters, charts, handlers, notifier, settings API) lulus 100%.
+  - Total 149 pengujian backend (`pytest`) lulus 100%.
+  - Pengecekan linter Ruff lulus (`All checks passed!`).
+  - Pengecekan mypy strict lulus (`Success: no issues found in 87 source files`).
+
+## [Fase 6: Komentar AI & Market Brief] - 2026-10-15
+
+### Ditambahkan
+- **Sistem Provider Komentar AI Multi-Model (`traderadar.ai`):**
+  - **Google Gemini Provider (`gemini.py`):** Integrasi langsung ke REST API Google Generative Language menggunakan model `gemini-2.5-flash` dengan `response_mime_type: "application/json"` dan skema terstruktur `response_schema` (Pydantic model `AIComment`). Dilengkapi penanganan retry exponential backoff dan fallback model otomatis.
+  - **Template Provider Offline/Aturan (`template.py`):** Provider cadangan berbasis aturan deterministik dalam Bahasa Indonesia yang fasih. Aktif otomatis tanpa API key (zero-config out-of-the-box), saat kuota habis, saat terjadi kendala jaringan, atau ketika output AI terdeteksi mengandung halusinasi harga.
+  - **Claude Provider Opsional (`claude.py`):** Dukungan opsional provider Anthropic Claude (`claude-3-5-sonnet-20241022`) via Messages API tool-use structured output.
+  - **AI Service Orchestrator (`service.py`):** Orkestrasi bertahap: Cek cache Redis $\rightarrow$ Rate limiter $\rightarrow$ Eksekusi provider primer $\rightarrow$ Validasi angka anti-halusinasi $\rightarrow$ Fallback otomatis ke Template jika gagal/invalid $\rightarrow$ Persistensi database PostgreSQL $\rightarrow$ Publikasi event Redis UI Pub/Sub.
+- **Validasi Anti-Halusinasi & Kebenaran Angka Ketat (`validate.py`):**
+  - Pemeriksaan batas panjang ringkasan naratif ($\le 120$ kata) tanpa janji keuntungan/profit.
+  - Verifikasi matematis ketat pada setiap angka desimal (`level_penting`): setiap level harga harus bersumber dari data input teknikal aktual (entry, SL, TP1, TP2, VWAP, EMA, Bollinger, Supertrend, High/Low, OBI) dengan toleransi ketat $\pm 0.8\%$ atau $\le 0.5$ poin absolut.
+  - Kegagalan validasi langsung mengesampingkan output LLM dan mengalihkan ke Template Engine dengan badge `is_fallback = True`.
+- **Redis Token-Bucket Rate Limiter (`ratelimit.py`):**
+  - Pembatasan 5 RPM (Requests Per Minute) sliding window.
+  - Pembatasan 100 RPD (Requests Per Day) sliding counter (reset otomatis tiap pukul 00:00 WIB).
+  - Monitoring statistik kuota aktif real-time melalui endpoint `GET /api/ai/quota` dan `FullHealthResponse` (`/api/health/full`).
+- **Market Brief Generator & Penjadwal Rutin (`brief.py`, `scheduler.py`, `worker.py`):**
+  - Kompilasi snapshot teknikal multi-aset (XAUUSDT, BTCUSDT, ETHUSDT, SOLUSDT) mencakup VWAP kemarin, rentang harian (daily high/low), dan skor konfluensi.
+  - Scheduler cron mengeksekusi pembuatan Market Brief pagi otomatis setiap pukul 06:45 WIB (`brief_morning`).
+  - Worker arq mengonsumsi stream Redis `signals.stream` dan secara otomatis memicu ulasan AI saat terdeteksi sinyal kuat (`STRONG_LONG` atau `STRONG_SHORT`).
+- **Database Schema & Migrasi PostgreSQL:**
+  - Migrasi Alembic `005_create_phase6_tables.py` untuk tabel `market_briefs` dan `ai_comments`.
+  - SQLAlchemy models `MarketBriefRecord` dan `AICommentRecord` di `traderadar.core.models`.
+- **REST API Endpoints:**
+  - `GET /api/analysis/{symbol}/ai`: Mengambil komentar AI tersimpan terbaru untuk simbol dan timeframe terkait.
+  - `POST /api/analysis/{symbol}/ai`: Meminta analisis AI on-demand untuk simbol dan timeframe aktif.
+  - `GET /api/briefs/latest`: Mengambil Market Brief terbaru (edisi pagi / siang).
+  - `POST /api/briefs`: Memperbarui atau membuat Market Brief baru secara on-demand.
+  - `GET /api/ai/quota`: Mendapatkan informasi kuota RPM dan RPD terkini beserta provider aktif.
+- **Frontend Professional UI (`frontend/`):**
+  - **Panel Tanggapan AI (`AICommentPanel.tsx`):**
+    - Terintegrasi pada Kolom Keputusan `AnalisaPage.tsx`.
+    - Badge model aktif (`Gemini 2.5 Flash` / `Komentar Otomatis (Template)`), status sisa kuota, dan tombol permintaan analisis.
+    - Bias badge interaktif (`BULLISH`, `BEARISH`, `NETRAL`), keyakinan (`Tinggi`, `Sedang`, `Rendah`), serta indikator kesepakatan engine vs AI.
+    - Ringkasan naratif, perbandingan skenario bullish vs bearish, kartu alasan utama & faktor risiko, chip level penting terverifikasi, serta kondisi invalidasi tesis & rekomendasi manajemen risiko.
+    - Metrik latensi generasi, timestamp WIB, dan token usage.
+  - **Halaman Market Brief (`BriefPage.tsx` di `/brief`):**
+    - Ringkasan pasar harian dengan badge sentimen makro (`Risk-on`, `Risk-off`, `Netral`).
+    - Tabel level kunci multi-aset (XAUUSDT, BTCUSDT, ETHUSDT, SOLUSDT): harga terakhir, VWAP kemarin, high kemarin, low kemarin, dan skor konfluensi.
+    - Kartu narasi terpadu per aset dengan skenario pergerakan hari ini dan level pivot.
+    - Tombol aksi: "Buat Ulang Brief" (on-demand), "Salin Teks" markdown, dan integrasi notifikasi bot Telegram.
+    - Terintegrasi penuh ke navigasi bilah sisi (`Sidebar.tsx`) dan routing `Shell.tsx`.
+  - **Monitoring Status Sistem (`StatusPage.tsx`):**
+    - Kartu pemantauan kuota AI real-time dengan progress bar persentase penggunaan RPD, indikator RPM aktif, serta identifikasi model aktif.
+  - **Palet Perintah (`CommandPalette.tsx`):**
+    - Aksi cepat "Buka Market Brief Harian AI" dan "Buat Market Brief Baru (On-demand)".
+- **Pengujian & Verifikasi Kualitas:**
+  - 118 pengujian unit backend (`pytest`) lulus 100% (termasuk validasi angka karangan, template provider, gemini mock, rate limiter, API endpoints).
+  - 14 pengujian unit frontend (`vitest`) lulus 100% (`AICommentPanel.test.tsx`, `BriefPage.test.tsx`, dll.).
+  - Pengecekan linter Ruff dan MyPy Strict lulus tanpa error pada seluruh source code backend.
+  - Pengecekan linter ESLint lulus dengan 0 warning dan 0 error pada frontend.
+  - Build produksi bundle Vite frontend sukses tanpa error.
+
 ## [Fase 5: Trade Ticket, Kalibrasi Broker, Paper Trading] - 2026-10-15
 
 ### Ditambahkan

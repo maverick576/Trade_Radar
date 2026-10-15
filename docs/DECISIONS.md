@@ -176,5 +176,76 @@ Dokumen ini mencatat keputusan teknis, pinning versi, dan verifikasi asumsi ekst
      - Kartu Ticket Aktif disematkan di kolom keputusan `AnalisaPage.tsx` dan cockpit `DashboardPage.tsx`.
      - Dialog kalibrasi offset broker, pencatatan eksekusi nyata, dan konfirmasi penutupan posisi.
 
+---
 
+## ADR-008: Arsitektur Komentar AI, Validasi Anti-Halusinasi, Rate Limiting, dan Market Brief (Fase 6)
+- **Tanggal:** 15 Oktober 2026
+- **Status:** Diterima
+- **Keputusan Teknis & Arsitektur:**
+  1. **Multi-Provider AI & Graceful Degradation (`ai/`):**
+     - Provider Primer: **Google Gemini** (`gemini-2.5-flash`) via Google Generative Language REST API langsung dengan `response_mime_type: "application/json"` dan `response_schema` (Pydantic model schema).
+     - Provider Sekunder/Opsional: **Anthropic Claude** (`claude-3-5-sonnet-20241022`) via Messages API dengan structured output tool.
+     - Provider Fallback Offline: **Template Provider** berbasis aturan teknikal deterministik dalam Bahasa Indonesia yang fasih. Aktif otomatis ketika:
+       - API key tidak disetel di `.env` (Zero Configuration Out-of-the-Box).
+       - Kuota RPM/RPD terlampaui.
+       - Terjadi gangguan jaringan/timeout.
+       - Output model terdeteksi mengandung halusinasi harga.
+  2. **Validasi Anti-Halusinasi Angka Ketat (`validate.py`):**
+     - Sesuai prinsip *deterministic signal*: AI hanya bertindak sebagai narator/penjelas kontekstual, bukan pengambil keputusan sinyal.
+     - Setiap angka float yang disebut di `level_penting` dicocokkan terhadap seluruh data input teknikal (entry, SL, TP1, TP2, VWAP, EMA, Bollinger, Supertrend, High/Low, OBI) dengan toleransi presisi $\pm 0.8\%$ atau $\le 0.5$ poin absolut.
+     - Batas kata ringkasan dibatasi $\le 120$ kata tanpa janji keuntungan/profit.
+     - Pelanggaran validasi langsung membatalkan output LLM dan mengalihkan ke Template Engine dengan badge `is_fallback = True`.
+  3. **Rate Limiting Redis & Kuota (`ratelimit.py`):**
+     - Implementasi token-bucket sliding window di Redis:
+       - 5 RPM (Requests Per Minute) via key `ai:ratelimit:rpm:<window>`.
+       - 100 RPD (Requests Per Day) via key `ai:ratelimit:rpd:<date_wib>` (reset otomatis tiap 00:00 WIB).
+     - Monitoring kuota real-time diekspos melalui endpoint `GET /api/ai/quota` dan diintegrasikan ke probe kesiapan `/api/health/full`.
+  4. **Penyimpanan Database & Idempotensi Event:**
+     - Tabel PostgreSQL `ai_comments` dan `market_briefs` dibuat melalui migrasi Alembic `005_create_phase6_tables.py`.
+     - Caching hash input di Redis (`ai:cache:<symbol>:<tf>:<bar_time>`) dengan TTL 15 menit mencegah pemborosan token LLM pada bar yang sama.
+     - Konsumen stream di `worker.py` mendeteksi sinyal `STRONG_LONG` atau `STRONG_SHORT` dan otomatis memicu generasi komentar AI latar belakang.
+  5. **Market Brief Pagi (06:45 WIB) & Halaman Brief (`/brief`):**
+     - `generate_market_brief` mengompilasi snapshot multi-aset (XAUUSDT, BTCUSDT, ETHUSDT, SOLUSDT) mencakup VWAP kemarin, rentang harian, dan skor konfluensi.
+     - Service `scheduler.py` memeriksa jam WIB dan otomatis mengeksekusi brief pagi setiap 06:45 WIB.
+     - Halaman `BriefPage.tsx` menampilkan sentimen umum (Risk-on / Risk-off / Netral), tabel level kunci multi-aset, kartu narasi per simbol, aksi "Buat Ulang Brief", salin teks markdown, dan integrasi notifikasi Telegram.
+  6. **UI Integration:**
+     - Panel Tanggapan AI (`AICommentPanel.tsx`) terintegrasi pada Kolom Keputusan `AnalisaPage.tsx` dengan badge model, visual kesepakatan engine vs AI, kartu skenario bullish/bearish, level penting, dan kondisi invalidasi.
+     - Status kuota AI interaktif ditampilkan pada `StatusPage.tsx`.
+     - Command Palette (`Ctrl+K`) diperkaya dengan aksi cepat AI dan Market Brief.
 
+---
+
+## ADR-009: Arsitektur Bot Telegram Dua Arah, Keamanan Whitelist, Charting Headless, dan Notifikasi Proaktif (Fase 7)
+- **Tanggal:** 15 Oktober 2026
+- **Status:** Diterima
+- **Keputusan Teknis & Arsitektur:**
+  1. **Long Polling & Keamanan Whitelist Ketat (`whitelist.py`):**
+     - Menggunakan `python-telegram-bot` v21.11 (`>=21.0,<22.0`) dengan arsitektur async penuh (`Application.builder()`, `CommandHandler`, `CallbackQueryHandler`, `MessageHandler`).
+     - Menggunakan polling (bukan webhook) agar andal di localhost/Docker tanpa memerlukan domain publik ber-SSL atau tunneling ngrok, serta siap dipindahkan ke VPS.
+     - Pembatasan whitelist ketat melalui environment variable `TELEGRAM_ALLOWED_CHAT_IDS`. Setiap chat ID yang tidak terdaftar akan otomatis diabaikan tanpa memproses perintah atau membocorkan data.
+     - Perintah `/start` menampilkan Chat ID, status verifikasi whitelist, dan *financial disclaimer* wajib.
+     - Preferensi pengguna (status jeda/pause notifikasi) disimpan di database PostgreSQL pada tabel `telegram_chats`.
+  2. **Render Candlestick Chart PNG Headless (`charts.py`):**
+     - Menggunakan `mplfinance` dan `matplotlib` dengan headless backend `Agg` (`matplotlib.use("Agg")`).
+     - Menghasilkan gambar grafik candlestick bertema gelap (`#0B0E14` background, `#00C076` candle hijau, `#FF5353` candle merah) dalam waktu $\le 300$ ms tanpa display server (X11/Wayland).
+     - Overlay teknikal: Triple EMA (8, 21, 55), panel volume, serta garis horizontal level trading (Entry kuning, SL merah putus-putus, TP1 hijau putus-putus, TP2 hijau tua dash-dot).
+  3. **Rich Ticket Broadcast dengan Jeda AI & Tombol Interaktif (`notifier.py`):**
+     - Saat tiket baru dihasilkan, dispatcher menunggu hingga 20 detik (`wait_ai_seconds = 20`) agar komentar analisis AI selesai dibuat, sehingga tiket terkirim lengkap dengan ulasan AI dalam satu pesan.
+     - Tiket dikirim sebagai foto grafik resolusi tinggi dengan teks caption Markdown Bahasa Indonesia dan tombol inline keyboard: `[✅ Saya eksekusi]`, `[⏭ Lewati]`, `[📊 Detail]`.
+     - Tombol `[📊 Detail]` menyajikan popup/pesan penjabaran parameter teknikal, faktor pendukung, faktor risiko, dan invalidasi.
+     - Tombol `[⏭ Lewati]` memperbarui status tiket menjadi `skipped`.
+  4. **Alur Interaktif Dua Langkah "Saya eksekusi" (`handlers.py`):**
+     - Sesuai prinsip produk: TradeRadar **tidak pernah memanggil endpoint eksekusi broker/exchange secara langsung**.
+     - Saat pengguna menekan `[✅ Saya eksekusi]`, bot menyimpan status pending ke Redis key `tg:pending_exec:{chat_id}` dengan TTL 10 menit dan meminta pengguna membalas pesan dengan format `<HARGA_FILL> [LOT]`.
+     - Ketika pengguna membalas, bot memvalidasi harga, mencatat transaksi ke tabel `real_executions` dengan atribut `source = "telegram"`, menghitung slippage nyata secara otomatis, memperbarui status tiket menjadi `executed`, dan menghapus key Redis.
+  5. **Notifikasi Proaktif Menyeluruh:**
+     - Konsumen Redis Stream `signals` (consumer group `telegram`) dan Redis Pub/Sub `ui.events` menyiarkan:
+       - Trade Ticket baru (dengan chart PNG).
+       - Exit posisi paper trading (TP1 kenaikan ke BE, TP2 penutupan penuh, SL, time stop).
+       - Tiket kedaluwarsa (setelah 3–4 bar tanpa sentuhan entry).
+       - Market Brief otomatis setiap 06:45 WIB.
+       - Rekap Kinerja Harian setiap 22:00 WIB (total trade hari ini, winrate, realized PnL, expectancy).
+       - Peringatan sistem saat koneksi data feed degraded/recovered.
+  6. **Endpoint Pengaturan & Uji Koneksi Telegram (`routers/settings.py`):**
+     - `GET /api/settings/telegram/status`: Mengembalikan konfigurasi bot, status online, jumlah pelanggan aktif, dan daftar chat ID terverifikasi.
+     - `POST /api/settings/telegram/test`: Mengirimkan pesan pengujian instan ke semua subscriber aktif untuk verifikasi koneksi dari dashboard web.

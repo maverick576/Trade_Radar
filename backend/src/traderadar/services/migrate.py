@@ -40,6 +40,15 @@ async def run_migrations() -> None:
         engine = get_engine()
         async with engine.connect() as conn:
             await conn.execute(text("CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE;"))
+            await conn.execute(
+                text(
+                    "DO $$ BEGIN "
+                    "IF EXISTS (SELECT 1 FROM information_schema.tables "
+                    "WHERE table_name = 'alembic_version') THEN "
+                    "ALTER TABLE alembic_version ALTER COLUMN version_num TYPE VARCHAR(128); "
+                    "END IF; END $$;"
+                )
+            )
             await conn.commit()
             logger.info("timescaledb_extension_verified")
     except Exception as exc:
