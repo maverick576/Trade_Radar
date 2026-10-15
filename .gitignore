@@ -33,6 +33,9 @@ node_modules/
 frontend/dist/
 frontend/build/
 .eslintcache
+test-results/
+playwright-report/
+blob-report/
 
 # IDE & OS
 .idea/

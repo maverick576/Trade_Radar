@@ -3,6 +3,7 @@
 import os
 from collections.abc import AsyncGenerator
 
+import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 
@@ -10,7 +11,7 @@ from traderadar.api.app import app
 from traderadar.core.config import get_settings
 
 
-@pytest_asyncio.fixture(autouse=True)
+@pytest.fixture(autouse=True)
 def override_env() -> None:
     """Ensure test environment does not attempt external production connections."""
     os.environ["SECRET_KEY"] = "test-secret-key-that-is-at-least-32-chars-long"

@@ -51,6 +51,15 @@ def setup_logging(log_level: str = "INFO", json_format: bool = True) -> None:
         mask_sensitive_data,
     ]
 
+    foreign_processors: list[structlog.types.Processor] = [
+        structlog.stdlib.add_logger_name,
+        structlog.stdlib.add_log_level,
+        structlog.stdlib.PositionalArgumentsFormatter(),
+        structlog.processors.TimeStamper(fmt="iso", utc=True),
+        structlog.processors.StackInfoRenderer(),
+        mask_sensitive_data,
+    ]
+
     renderer: structlog.types.Processor
     if json_format:
         renderer = structlog.processors.JSONRenderer()
@@ -68,7 +77,7 @@ def setup_logging(log_level: str = "INFO", json_format: bool = True) -> None:
     )
 
     formatter = structlog.stdlib.ProcessorFormatter(
-        foreign_pre_chain=shared_processors,
+        foreign_pre_chain=foreign_processors,
         processors=[
             structlog.stdlib.ProcessorFormatter.remove_processors_meta,
             renderer,
@@ -84,7 +93,7 @@ def setup_logging(log_level: str = "INFO", json_format: bool = True) -> None:
     root_logger.setLevel(level)
 
     # Suppress excessive noise from external libraries
-    for name in ("urllib3", "asyncio", "aiosqlite"):
+    for name in ("urllib3", "asyncio", "aiosqlite", "httpx", "httpcore"):
         logging.getLogger(name).setLevel(logging.WARNING)
 
 

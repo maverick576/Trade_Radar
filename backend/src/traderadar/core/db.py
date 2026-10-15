@@ -10,11 +10,11 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
-from sqlalchemy.orm import declarative_base
 
 from traderadar.core.config import get_settings
+from traderadar.core.models import Base
 
-Base = declarative_base()
+__all__ = ["Base", "get_engine", "get_session_factory", "get_db_session", "ping_db", "close_db"]
 
 _engine: AsyncEngine | None = None
 _session_factory: async_sessionmaker[AsyncSession] | None = None

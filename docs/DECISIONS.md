@@ -37,3 +37,53 @@ Dokumen ini mencatat keputusan teknis, pinning versi, dan verifikasi asumsi ekst
     - `api`: mengecek HTTP status `http://127.0.0.1:8000/api/health`
     - `service <nama>`: mengecek kesegaran heartbeat di Redis (< 45s).
   - Endpoint `/api/health/full` merangkum status DB, Redis, dan seluruh heartbeat service untuk konsumsi UI dan monitoring.
+
+---
+
+## ADR-003: Arsitektur Autentikasi, Keamanan Sesi, dan Shell UI Design System (Fase 1)
+- **Tanggal:** 15 Oktober 2026
+- **Status:** Diterima
+- **Keputusan:**
+  1. **Password Hashing:** Menggunakan **Argon2id** (`argon2-cffi`) dengan parameter RFC 9106 (memory_cost 65536 KiB, time_cost 3, parallelism 4) untuk keamanan maksimal terhadap GPU attack.
+  2. **Stateless Access Token + Stateful Refresh Token:**
+     - Access token menggunakan **PyJWT** (algoritma HS256) dengan masa berlaku 15 menit, dikirim via cookie `traderadar_access` (HttpOnly, Secure, SameSite=Lax).
+     - Refresh token berupa token kriptografi acak (32 bytes urlsafe) yang disimpan sebagai hash SHA-256 di tabel PostgreSQL `refresh_tokens` dengan masa berlaku 30 hari di cookie `traderadar_refresh`. Dilengkapi mekanisme token rotation pada setiap pemanggilan `/api/auth/refresh`.
+  3. **Double-Submit CSRF Protection:** Cookie `traderadar_csrf` dan header `X-CSRF-Token` divalidasi pada semua mutasi state (POST, PUT, PATCH, DELETE).
+  4. **Login Brute-Force Rate Limiting:** Menggunakan Redis key `ratelimit:login:<ip>` dengan batas 5 percobaan gagal per jendela 5 menit.
+  5. **Two-Factor Authentication (2FA TOTP):** Menggunakan `pyotp` (RFC 6238 standard TOTP 6 digit 30 detik) dengan provisioning URI `otpauth://` dan secret terenkripsi AES-GCM di kolom `users.totp_secret`.
+  6. **FastAPI Auth Gatekeeper Middleware:** Memastikan seluruh rute `/api/*` terkunci secara default dan mengembalikan status HTTP `401 Unauthorized` dengan format error terstandarisasi, kecuali rute whitelist publik (`/api/health*`, `/api/auth/login`, `/api/auth/refresh`, `/api/docs`, `/api/openapi.json`).
+  7. **Typed API Client Generation:** OpenAPI v3 schema diekstrak langsung dari FastAPI dan dikonversi ke TypeScript types menggunakan `openapi-typescript` dan `openapi-fetch` untuk menjamin kepatuhan zero `any` pada seluruh integrasi API frontend.
+  8. **Design System & Aksesibilitas:** Implementasi palet tema gelap/terang (`UI_SPEC.md` §1) dengan rasio kontras WCAG AA (≥ 4.5:1 untuk teks normal), navigasi keyboard penuh (`Ctrl+K` untuk Command Palette, `1-4` untuk simbol), serta pengujian otomatis dengan `@axe-core/playwright` (0 critical/serious violations).
+
+---
+
+## ADR-004: Verifikasi Pasar Gold, Konektor Binance, dan Arsitektur Market Data (Fase 2)
+- **Tanggal:** 15 Oktober 2026
+- **Status:** Diterima
+- **Verifikasi & Keputusan:**
+  1. **Verifikasi Asumsi Eksternal Simbol `XAUUSDT` di Binance Futures:**
+     - Simbol `XAUUSDT` terverifikasi aktif di endpoint publik `https://fapi.binance.com/fapi/v1/exchangeInfo` dengan status `TRADING`, tipe kontrak `TRADIFI_PERPETUAL`, `baseAsset`: `XAU`, `quoteAsset`: `USDT`.
+     - Seluruh endpoint derivatif Binance Futures untuk `XAUUSDT` berfungsi penuh dan merespons HTTP 200:
+       - Kline historis (`/fapi/v1/klines?symbol=XAUUSDT&interval=15m`)
+       - Orderbook depth (`/fapi/v1/depth?symbol=XAUUSDT`)
+       - Open interest live (`/fapi/v1/openInterest?symbol=XAUUSDT`)
+       - Histori open interest (`/futures/data/openInterestHist?symbol=XAUUSDT&period=15m`)
+       - Global Long/Short Account Ratio (`/futures/data/globalLongShortAccountRatio?symbol=XAUUSDT&period=15m`)
+  2. **Mitigasi DNS Poisoning ISP Lokal (Telkomsel/Internet Positif):**
+     - Terdeteksi bahwa DNS bawaan ISP tertentu di Indonesia mengarahkan domain `*.binance.com` ke IP blokir `202.3.218.137`. Namun pengujian membuktikan bahwa koneksi langsung ke IP asli CloudFront/AWS tidak diblokir SNI (TLS handshake berhasil 100%).
+     - Solusi arsitektural:
+       - `compose.yaml` dikonfigurasi dengan `dns: [1.1.1.1, 8.8.8.8]` untuk semua service backend.
+       - Modul `traderadar.core.network` menyertakan resolver DNS-over-HTTPS (DoH Cloudflare `1.1.1.1`) transparan sebagai fallback otomatis saat mendeteksi resolusi DNS lokal teracuni.
+       - Fallback spot mirror ke `https://data-api.binance.vision` didukung penuh.
+  3. **Rantai Fallback Sumber Gold:**
+     - Urutan prioritas: `binance_futures:XAUUSDT` -> `binance_spot:PAXGUSDT` -> `oanda:XAU_USD` (opsional jika token tersedia).
+     - Jika sumber aktif gagal/putus melebihi batas waktu (120 detik) atau error berturut-turut, sistem otomatis beralih ke `PAXGUSDT`, menyiarkan event status via Redis `ui.events` / WebSocket, dan menampilkan banner peringatan di UI frontend.
+  4. **Kalender Sesi Pasar Gold (DST Amerika Serikat):**
+     - Mengikuti jam pasar New York (`America/New_York`): buka Minggu 18:00 ET, tutup Jumat 17:00 ET.
+     - Penyesuaian Daylight Saving Time (EDT UTC-4 vs EST UTC-5) dihitung secara matematis via timezone `America/New_York`.
+     - Rollover harian Senin–Kamis 17:00–18:00 ET (20:45–01:15 UTC buffer) ditandai sebagai periode spread melebar untuk Macro Filter M4.
+  5. **TimescaleDB Hypertable & Kompresi:**
+     - Tabel `candles` dan `derivatives_snapshots` dijadikan hypertable dengan partisi waktu chunk 7 hari.
+     - Kebijakan kompresi otomatis diaktifkan setelah 30 hari (`timescaledb.compress_segmentby = 'symbol, tf'`) demi efisiensi storage jangka panjang.
+  6. **Pilihan Library Chart Frontend:**
+     - Menggunakan `lightweight-charts` v4.2.x dari TradingView (kanvas WebGL/HTML5 berperforma tinggi, responsif, dark/light theme native).

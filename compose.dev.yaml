@@ -13,6 +13,7 @@ services:
     command: ["uvicorn", "traderadar.api.app:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
     volumes:
       - ./backend/src:/app/src
+      - ./backend/alembic:/app/alembic
       - ./config:/app/config:ro
 
   ingestor:

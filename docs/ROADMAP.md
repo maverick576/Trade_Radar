@@ -16,18 +16,18 @@ Estimasi: ±14–18 sesi agent.
 - **Selesai bila:** di PC dengan Docker Desktop, dobel-klik `start.bat` → semua container `healthy` < 3 menit → browser terbuka ke halaman placeholder.
 
 ## Fase 1 — Auth & shell UI profesional
-- [ ] Tabel users/refresh_tokens/audit_log, `migrate` membuat admin dari `.env`.
-- [ ] Login/logout/refresh, CSRF, rate-limit login, ganti password, 2FA TOTP opsional.
-- [ ] Frontend: design system (`UI_SPEC.md` §1), shell (sidebar, topbar, command palette, tema), halaman Login, Status, route terlindungi, klien API hasil generate OpenAPI.
+- [x] Tabel users/refresh_tokens/audit_log, `migrate` membuat admin dari `.env`.
+- [x] Login/logout/refresh, CSRF, rate-limit login, ganti password, 2FA TOTP opsional.
+- [x] Frontend: design system (`UI_SPEC.md` §1), shell (sidebar, topbar, command palette, tema), halaman Login, Status, route terlindungi, klien API hasil generate OpenAPI.
 - **Selesai bila:** tanpa login semua `/api/*` (kecuali login/health) → 401; Playwright login lulus; Lighthouse Accessibility ≥ 95 di Login.
 
 ## Fase 2 — Data market real (Binance, Gold, fallback)
-- [ ] Verifikasi `XAUUSDT` di `exchangeInfo` + endpoint OI/LS/depth; tulis hasil ke `DECISIONS.md`.
-- [ ] `BinanceConnector` futures & spot: backfill, combined WS (kline, depth, markPrice), poll OI/LS/F&G, reconnect 23 jam, gap fill, throttle weight.
-- [ ] Rantai sumber Gold (XAUUSDT → PAXGUSDT → OANDA opsional) dengan switch otomatis + event status.
-- [ ] Kalender sesi pasar Gold (DST AS).
-- [ ] Hypertable candles/derivatives/sentiment + kompresi.
-- [ ] API `/symbols`, `/candles`; WS `tick`, `candle`; halaman Analisa: chart live + pilih TF; Dashboard: kartu harga live.
+- [x] Verifikasi `XAUUSDT` di `exchangeInfo` + endpoint OI/LS/depth; tulis hasil ke `DECISIONS.md`.
+- [x] `BinanceConnector` futures & spot: backfill, combined WS (kline, depth, markPrice), poll OI/LS/F&G, reconnect 23 jam, gap fill, throttle weight.
+- [x] Rantai sumber Gold (XAUUSDT → PAXGUSDT → OANDA opsional) dengan switch otomatis + event status.
+- [x] Kalender sesi pasar Gold (DST AS).
+- [x] Hypertable candles/derivatives/sentiment + kompresi.
+- [x] API `/symbols`, `/candles`; WS `tick`, `candle`; halaman Analisa: chart live + pilih TF; Dashboard: kartu harga live.
 - **Selesai bila:** harga di UI cocok dengan Binance (≤ 0,05%); putus internet 2 menit → tersambung lagi tanpa candle bolong; memblokir XAUUSDT (simulasi di test) → otomatis PAXG + banner.
 
 ## Fase 3 — 10 indikator
