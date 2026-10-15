@@ -1,0 +1,55 @@
+name: traderadar
+
+services:
+  db:
+    ports:
+      - "127.0.0.1:5433:5432"
+
+  redis:
+    ports:
+      - "127.0.0.1:6380:6379"
+
+  api:
+    command: ["uvicorn", "traderadar.api.app:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    volumes:
+      - ./backend/src:/app/src
+      - ./config:/app/config:ro
+
+  ingestor:
+    volumes:
+      - ./backend/src:/app/src
+      - ./config:/app/config:ro
+
+  engine:
+    volumes:
+      - ./backend/src:/app/src
+      - ./config:/app/config:ro
+
+  worker:
+    volumes:
+      - ./backend/src:/app/src
+      - ./config:/app/config:ro
+
+  scheduler:
+    volumes:
+      - ./backend/src:/app/src
+      - ./config:/app/config:ro
+      - ./backups:/app/backups
+
+  telegram:
+    volumes:
+      - ./backend/src:/app/src
+      - ./config:/app/config:ro
+
+  web-dev:
+    image: node:22.14-alpine
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+    command: ["sh", "-c", "npm install && npm run dev -- --host 0.0.0.0 --port 5173"]
+    ports:
+      - "127.0.0.1:5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:8080
+    depends_on:
+      - api

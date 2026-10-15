@@ -1,0 +1,22 @@
+# Git & OS
+.git
+.gitignore
+*.mp4
+
+# Python
+.venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache
+.mypy_cache
+.ruff_cache
+
+# Node
+node_modules
+frontend/node_modules
+frontend/dist
+
+# Backups
+backups

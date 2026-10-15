@@ -1,0 +1,130 @@
+# TradeRadar — setelan strategi. Salin menjadi settings.yaml (migrate melakukannya otomatis).
+# Nilai bisa di-override dari halaman Pengaturan (tabel app_settings, ber-versi).
+
+watchlist:            # maks 5
+  - { symbol: BTCUSDT, display: BTCUSD, asset: crypto }
+  - { symbol: ETHUSDT, display: ETHUSD, asset: crypto }
+  - { symbol: SOLUSDT, display: SOLUSD, asset: crypto }
+  - { symbol: XAUUSD,  display: XAUUSD, asset: gold }
+
+gold:
+  sources:            # dicoba berurutan; fallback otomatis
+    - binance_futures:XAUUSDT
+    - binance_spot:PAXGUSDT
+    - oanda:XAU_USD     # aktif hanya bila OANDA_API_TOKEN diisi
+  prefer_oanda_when_available: false
+  switch_after_seconds: 120
+  orderbook_weight_mult: 0.5
+
+timeframes:
+  entry: M15
+  confirm: H1
+  bias: [H4, D1]
+  backfill_bars: 1000
+
+indicators:
+  vwap:        { reset: "00:00", z_threshold: 0.25, overextended_z: 2.0 }
+  ema_ribbon:  { periods: [8, 13, 21, 34, 55] }
+  supertrend:  { atr_period: 10, multiplier: 3.0, recent_flip_bars: 3 }
+  rsi_div:     { period: 14, pivot_left: 5, pivot_right: 3, min_gap: 5, max_gap: 60, valid_bars: 10 }
+  bollinger:   { period: 20, std: 2.0, squeeze_pct: 20, squeeze_lookback: 120 }
+  cvd_obv:     { slope_window: 20, norm_window: 100, threshold: 0.5 }
+  funding_oi:  { oi_window_hours: 4, oi_change_pct: 1.0, funding_crowded: 0.0005, funding_negative: -0.0003 }
+  orderbook:   { depth_pct: 0.5, smooth_seconds: 60, threshold: 0.15 }
+  lightgbm:    { horizon_bars: 16, barrier_atr: 1.5, p_threshold: 0.58, p_margin: 0.15, min_auc: 0.55 }
+  sentiment:   { fng_fear: 20, fng_greed: 80, ls_high: 2.5, ls_low: 0.7 }
+
+weights_version: "v1-default"
+weights:
+  ema_ribbon: 12
+  supertrend: 13
+  rsi_div: 8
+  bollinger: 7
+  vwap: 12
+  cvd_obv: 13
+  funding_oi: 10
+  orderbook: 5
+  lightgbm: 15
+  sentiment: 5
+
+verdict:
+  strong_score: 55
+  watch_score: 30
+  min_categories: 3
+  min_available_weight_pct: 50
+  cooldown_bars: 4
+  notify_watch_signals: false
+
+macro_filter:
+  htf_ema_period: 200
+  news_blackout_minutes: [30, 30]   # sebelum, sesudah
+  news_currencies: [USD]
+  news_impact: [High]
+  atr_percentile_range: [10, 95]
+  atr_lookback_days: 30
+  gold_rollover_utc: ["20:45", "01:15"]
+  max_funding_abs: 0.001
+  spread_median_multiplier: 2.0
+  fallback_warmup_minutes: 60
+
+strategy_b_triple_ema:
+  enabled: true
+  fast: 9
+  mid: 21
+  mid_source: open
+  slow: 50
+  rr_target: 1.0
+  notify: false
+
+risk:
+  sl_atr_mult: 1.5
+  sl_max_atr_mult: 2.5
+  tp1_r: 1.0
+  tp1_close_pct: 50
+  tp2_r: 2.0
+
+ticket:
+  valid_bars: 3
+  entry_zone_atr: 0.1
+  chase_limit_atr: 0.5
+  calibration_valid_minutes: 30
+
+brokers:                       # profil untuk kalkulator lot eksekusi manual
+  - name: Exness Standard
+    account_currency: USD
+    balance: 1000              # isi saldo nyata Anda di halaman Pengaturan
+    risk_pct: 1.0
+    symbols:
+      XAUUSD: { broker_symbol: XAUUSDm, contract_size: 100, min_lot: 0.01, lot_step: 0.01 }
+      BTCUSD: { broker_symbol: BTCUSDm, contract_size: 1, min_lot: 0.01, lot_step: 0.01 }
+      ETHUSD: { broker_symbol: ETHUSDm, contract_size: 1, min_lot: 0.1, lot_step: 0.1 }
+      SOLUSD: { broker_symbol: SOLUSDm, contract_size: 1, min_lot: 1, lot_step: 1 }
+    # Agent: nilai contract_size/min_lot crypto di atas adalah placeholder — user memverifikasi
+    # di spesifikasi kontrak Exness, UI menandai profil "belum diverifikasi" sampai user menyimpannya.
+
+paper:
+  initial_equity_usd: 1000
+  risk_pct: 1.0
+  time_stop_bars: 32
+  max_open_positions: 3
+  max_per_symbol: 1
+  daily_loss_limit_pct: 3.0
+  slippage_bps: 2
+  open_on_watch_signals: false
+
+schedule:                      # WIB
+  brief_morning: "06:45"
+  brief_midday: null           # mis. "13:45"
+  daily_recap: "22:00"
+  news_alert_minutes_before: 15
+  ml_retrain: "SUN 02:00"
+  backup: "03:00"
+  backup_keep_days: 14
+
+telegram:
+  send_chart_image: true
+  wait_ai_seconds: 20
+
+ml:
+  min_train_months: 12
+  gold_history_source: dukascopy   # dukascopy | binance

@@ -1,0 +1,79 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "traderadar"
+version = "0.1.0"
+description = "Professional crypto & Gold trading confluence engine and dashboard"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115.8,<0.116.0",
+    "uvicorn[standard]>=0.34.0,<0.35.0",
+    "pydantic>=2.10.6,<2.11.0",
+    "pydantic-settings>=2.7.1,<2.8.0",
+    "sqlalchemy>=2.0.38,<2.1.0",
+    "asyncpg>=0.30.0,<0.31.0",
+    "alembic>=1.14.1,<1.15.0",
+    "redis>=5.2.1,<5.3.0",
+    "arq>=0.26.1,<0.27.0",
+    "structlog>=25.1.0,<25.2.0",
+    "httpx>=0.28.1,<0.29.0",
+    "websockets>=14.2,<15.0",
+    "numpy>=2.2.3,<2.3.0",
+    "pandas>=2.2.3,<2.3.0",
+    "pyyaml>=6.0.2,<6.1.0",
+    "python-dateutil>=2.9.0",
+    "orjson>=3.10.15",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.4",
+    "pytest-asyncio>=0.25.3",
+    "mypy>=1.15.0",
+    "ruff>=0.9.6",
+    "types-pyyaml>=6.0.12.20241230",
+    "types-python-dateutil>=2.9.0.20241206",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/traderadar"]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = "-ra -q --asyncio-mode=auto"
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+]
+ignore = ["B008"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = false
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_return_any = true
+no_implicit_reexport = true
+plugins = ["pydantic.mypy"]

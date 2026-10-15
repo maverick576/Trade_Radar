@@ -1,0 +1,43 @@
+# Environments and secrets
+.env
+.env.local
+*.env
+
+# Backups and data
+backups/
+pgdata/
+redisdata/
+models/
+*.mp4
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+build/
+dist/
+*.egg-info/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Node / Web
+node_modules/
+.npm/
+frontend/dist/
+frontend/build/
+.eslintcache
+
+# IDE & OS
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db

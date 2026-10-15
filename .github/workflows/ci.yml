@@ -1,0 +1,132 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend-lint-and-test:
+    name: Backend Lint & Test
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: timescale/timescaledb:2.18.2-pg16
+        env:
+          POSTGRES_USER: traderadar
+          POSTGRES_PASSWORD: testpassword123
+          POSTGRES_DB: traderadar_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7.4.2-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "0.6.14"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: |
+          uv sync --frozen --extra dev
+
+      - name: Run Ruff Lint
+        working-directory: ./backend
+        run: |
+          uv run ruff check src tests
+
+      - name: Run Ruff Format Check
+        working-directory: ./backend
+        run: |
+          uv run ruff format --check src tests
+
+      - name: Run Mypy Type Check
+        working-directory: ./backend
+        run: |
+          uv run mypy src
+
+      - name: Run Pytest
+        working-directory: ./backend
+        env:
+          SECRET_KEY: test-secret-key-that-is-at-least-32-chars-long
+          DATABASE_URL: postgresql+asyncpg://traderadar:testpassword123@localhost:5432/traderadar_test
+          REDIS_URL: redis://localhost:6379/0
+        run: |
+          uv run pytest
+
+  frontend-lint-and-test:
+    name: Frontend Lint & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Run ESLint
+        working-directory: ./frontend
+        run: npm run lint
+
+      - name: Run Vitest
+        working-directory: ./frontend
+        run: npm run test
+
+      - name: Build production bundle
+        working-directory: ./frontend
+        run: npm run build
+
+  docker-build:
+    name: Docker Image Builds
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Python Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: infra/docker/python.Dockerfile
+          push: false
+          tags: traderadar-py:test
+
+      - name: Build Web Proxy Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: infra/docker/web.Dockerfile
+          push: false
+          tags: traderadar-web:test

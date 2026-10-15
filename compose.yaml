@@ -1,0 +1,191 @@
+name: traderadar
+
+x-py: &py
+  image: traderadar-py:${APP_VERSION:-dev}
+  build:
+    context: .
+    dockerfile: infra/docker/python.Dockerfile
+  env_file: .env
+  environment:
+    DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+    REDIS_URL: redis://redis:6379/0
+    TZ: UTC
+  volumes:
+    - ./config:/app/config:ro
+    - models:/app/models
+  depends_on:
+    db:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+    migrate:
+      condition: service_completed_successfully
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "5"
+
+services:
+  db:
+    image: timescale/timescaledb:2.18.2-pg16
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    command: ["postgres", "-c", "shared_buffers=256MB", "-c", "max_connections=60"]
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./infra/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    deploy:
+      resources:
+        limits:
+          memory: 768m
+    restart: unless-stopped
+
+  redis:
+    image: redis:7.4.2-alpine
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "96mb", "--maxmemory-policy", "noeviction"]
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    deploy:
+      resources:
+        limits:
+          memory: 128m
+    restart: unless-stopped
+
+  migrate:
+    <<: *py
+    command: ["python", "-m", "traderadar.services.migrate"]
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    <<: *py
+    command: ["uvicorn", "traderadar.api.app:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers"]
+    healthcheck:
+      test: ["CMD", "python", "-m", "traderadar.healthcheck", "api"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    deploy:
+      resources:
+        limits:
+          memory: 384m
+
+  ingestor:
+    <<: *py
+    command: ["python", "-m", "traderadar.services.ingestor"]
+    healthcheck:
+      test: ["CMD", "python", "-m", "traderadar.healthcheck", "service", "ingestor"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    deploy:
+      resources:
+        limits:
+          memory: 384m
+
+  engine:
+    <<: *py
+    command: ["python", "-m", "traderadar.services.engine"]
+    healthcheck:
+      test: ["CMD", "python", "-m", "traderadar.healthcheck", "service", "engine"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+
+  worker:
+    <<: *py
+    command: ["python", "-m", "traderadar.services.worker"]
+    healthcheck:
+      test: ["CMD", "python", "-m", "traderadar.healthcheck", "service", "worker"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+
+  scheduler:
+    <<: *py
+    command: ["python", "-m", "traderadar.services.scheduler"]
+    volumes:
+      - ./config:/app/config:ro
+      - ./backups:/app/backups
+      - models:/app/models
+    healthcheck:
+      test: ["CMD", "python", "-m", "traderadar.healthcheck", "service", "scheduler"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    deploy:
+      resources:
+        limits:
+          memory: 128m
+
+  telegram:
+    <<: *py
+    command: ["python", "-m", "traderadar.services.telegram"]
+    healthcheck:
+      test: ["CMD", "python", "-m", "traderadar.healthcheck", "service", "telegram"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    deploy:
+      resources:
+        limits:
+          memory: 192m
+
+  proxy:
+    image: traderadar-web:${APP_VERSION:-dev}
+    build:
+      context: .
+      dockerfile: infra/docker/web.Dockerfile
+    ports:
+      - "127.0.0.1:${APP_PORT:-8080}:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:80/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 64m
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  redisdata:
+  models:
