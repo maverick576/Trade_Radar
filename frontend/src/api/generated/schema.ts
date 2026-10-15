@@ -366,6 +366,206 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/tickets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Tickets
+         * @description List trade tickets with optional filters.
+         */
+        get: operations["list_tickets_api_tickets_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tickets/{ticket_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Ticket
+         * @description Get single ticket details with active broker calibration.
+         */
+        get: operations["get_ticket_api_tickets__ticket_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tickets/{ticket_id}/execute": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Execute Ticket Endpoint
+         * @description Record that the user has manually executed the ticket at a broker.
+         */
+        post: operations["execute_ticket_endpoint_api_tickets__ticket_id__execute_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tickets/{ticket_id}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Close Ticket Endpoint
+         * @description Close an executed trade and record PnL in the real execution journal.
+         */
+        post: operations["close_ticket_endpoint_api_tickets__ticket_id__close_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tickets/{ticket_id}/skip": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Skip Ticket Endpoint
+         * @description Mark a trade ticket as skipped.
+         */
+        post: operations["skip_ticket_endpoint_api_tickets__ticket_id__skip_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/calibrations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create Calibration
+         * @description Set broker price offset valid for 30 minutes.
+         */
+        post: operations["create_calibration_api_calibrations_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/calibrations/latest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Latest Calibration Endpoint
+         * @description Retrieve active broker calibration offset if not expired.
+         */
+        get: operations["get_latest_calibration_endpoint_api_calibrations_latest_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/paper/trades": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Paper Trades
+         * @description List paper trading positions and history.
+         */
+        get: operations["list_paper_trades_api_paper_trades_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/paper/account": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Paper Account
+         * @description Get current virtual account summary, PnL, and daily limits.
+         */
+        get: operations["get_paper_account_api_paper_account_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/paper/trades/{trade_id}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Close Paper Trade
+         * @description Manually close an open paper trade.
+         */
+        post: operations["close_paper_trade_api_paper_trades__trade_id__close_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -415,6 +615,60 @@ export interface components {
             created_at: string;
         };
         /**
+         * CalibrationRequest
+         * @description Request payload to set broker price offset.
+         */
+        CalibrationRequest: {
+            /**
+             * Symbol
+             * @description Symbol, e.g. 'XAUUSD'
+             */
+            symbol: string;
+            /**
+             * Broker Profile
+             * @description Broker profile name
+             */
+            broker_profile: string;
+            /**
+             * Broker Price
+             * @description Current price displayed at broker terminal
+             */
+            broker_price: number;
+        };
+        /**
+         * CalibrationResponse
+         * @description Schema for broker price calibration offset.
+         */
+        CalibrationResponse: {
+            /** Id */
+            id: number;
+            /** Symbol */
+            symbol: string;
+            /** Broker Profile */
+            broker_profile: string;
+            /** Broker Price */
+            broker_price: number;
+            /** Source Price */
+            source_price: number;
+            /** Offset */
+            offset: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /**
+             * Is Active
+             * @default true
+             */
+            is_active: boolean;
+        };
+        /**
          * CandleItem
          * @description Candlestick bar representation.
          */
@@ -460,6 +714,86 @@ export interface components {
              * @description Kata sandi baru minimal 8 karakter
              */
             new_password: string;
+        };
+        /**
+         * ClosePaperTradeRequest
+         * @description Request payload to manually close an open paper trade.
+         */
+        ClosePaperTradeRequest: {
+            /**
+             * Exit Price
+             * @description Exit price
+             */
+            exit_price: number;
+            /**
+             * Exit Time
+             * @description Optional exit timestamp
+             */
+            exit_time?: string | null;
+            /**
+             * Exit Reason
+             * @description Reason for closing
+             * @default MANUAL
+             */
+            exit_reason: string;
+        };
+        /**
+         * CloseTicketRequest
+         * @description Request payload to record real trade close.
+         */
+        CloseTicketRequest: {
+            /**
+             * Exit Price
+             * @description Actual exit fill price
+             */
+            exit_price: number;
+            /**
+             * Exit Time
+             * @description Exit time (UTC)
+             */
+            exit_time?: string | null;
+            /**
+             * Notes
+             * @description Optional notes
+             */
+            notes?: string | null;
+        };
+        /**
+         * ExecuteTicketRequest
+         * @description Request payload to record real trade execution.
+         */
+        ExecuteTicketRequest: {
+            /**
+             * Broker Profile
+             * @description Broker profile name, e.g. 'Exness Standard'
+             */
+            broker_profile: string;
+            /**
+             * Fill Price
+             * @description Actual filled price at the broker
+             */
+            fill_price: number;
+            /**
+             * Lot
+             * @description Actual executed lot size
+             */
+            lot: number;
+            /**
+             * Fill Time
+             * @description Execution time (UTC)
+             */
+            fill_time?: string | null;
+            /**
+             * Source
+             * @description Origin of execution: 'ui' or 'telegram'
+             * @default ui
+             */
+            source: string;
+            /**
+             * Notes
+             * @description Optional notes or trade tags
+             */
+            notes?: string | null;
         };
         /**
          * FullHealthResponse
@@ -628,6 +962,145 @@ export interface components {
             } | null;
         };
         /**
+         * PaperAccountResponse
+         * @description Schema for paper trading account summary metrics.
+         */
+        PaperAccountResponse: {
+            /** Initial Equity */
+            initial_equity: number;
+            /** Equity */
+            equity: number;
+            /** Realized Pnl Usd */
+            realized_pnl_usd: number;
+            /** Daily Pnl Usd */
+            daily_pnl_usd: number;
+            /** Daily Loss Limit Hit */
+            daily_loss_limit_hit: boolean;
+            /** Open Positions Count */
+            open_positions_count: number;
+            /** Total Closed Trades */
+            total_closed_trades: number;
+            /** Winrate Pct */
+            winrate_pct: number;
+            /** Expectancy R */
+            expectancy_r: number;
+        };
+        /**
+         * PaperTradeResponse
+         * @description Schema for returning paper trade positions.
+         */
+        PaperTradeResponse: {
+            /** Id */
+            id: number;
+            /** Ticket Id */
+            ticket_id?: number | null;
+            /** Signal Id */
+            signal_id?: number | null;
+            /** Strategy */
+            strategy: string;
+            /** Symbol */
+            symbol: string;
+            /**
+             * Side
+             * @enum {string}
+             */
+            side: "LONG" | "SHORT";
+            /**
+             * Entry Time
+             * Format: date-time
+             */
+            entry_time: string;
+            /** Entry Price */
+            entry_price: number;
+            /** Size */
+            size: number;
+            /** Sl */
+            sl: number;
+            /** Tp1 */
+            tp1: number;
+            /** Tp2 */
+            tp2: number;
+            /** Tp1 Hit */
+            tp1_hit: boolean;
+            /** Bars Held */
+            bars_held: number;
+            /** Status */
+            status: string;
+            /** Exit Time */
+            exit_time?: string | null;
+            /** Exit Price */
+            exit_price?: number | null;
+            /** Exit Reason */
+            exit_reason?: string | null;
+            /** Pnl Usd */
+            pnl_usd?: number | null;
+            /** Pnl R */
+            pnl_r?: number | null;
+            /** Fees Usd */
+            fees_usd: number;
+            /** Mfe R */
+            mfe_r: number;
+            /** Mae R */
+            mae_r: number;
+            /** Is Virtual */
+            is_virtual: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /**
+         * RealExecutionResponse
+         * @description Schema for returned real execution record.
+         */
+        RealExecutionResponse: {
+            /** Id */
+            id: number;
+            /** Ticket Id */
+            ticket_id: number;
+            /** Broker Profile */
+            broker_profile: string;
+            /** Fill Price */
+            fill_price: number;
+            /** Lot */
+            lot: number;
+            /**
+             * Fill Time
+             * Format: date-time
+             */
+            fill_time: string;
+            /** Exit Price */
+            exit_price?: number | null;
+            /** Exit Time */
+            exit_time?: string | null;
+            /** Pnl Usd */
+            pnl_usd?: number | null;
+            /** Pnl R */
+            pnl_r?: number | null;
+            /** Slippage Points */
+            slippage_points: number;
+            /** Source */
+            source: string;
+            /** Notes */
+            notes?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /**
          * ScoreHistoryItem
          * @description Historical score data point for time-series chart.
          */
@@ -773,6 +1246,95 @@ export interface components {
         SymbolsResponse: {
             /** Symbols */
             symbols: components["schemas"]["SymbolItem"][];
+        };
+        /**
+         * TicketResponse
+         * @description Schema for returning Trade Tickets.
+         */
+        TicketResponse: {
+            /** Id */
+            id: number;
+            /** Signal Id */
+            signal_id?: number | null;
+            /** Symbol */
+            symbol: string;
+            /**
+             * Side
+             * @enum {string}
+             */
+            side: "LONG" | "SHORT";
+            /** Strategy */
+            strategy: string;
+            /** Score */
+            score: number;
+            /** Source */
+            source: string;
+            /** Entry */
+            entry: number;
+            /** Entry Low */
+            entry_low: number;
+            /** Entry High */
+            entry_high: number;
+            /** Sl */
+            sl: number;
+            /** Tp1 */
+            tp1: number;
+            /** Tp2 */
+            tp2: number;
+            /** Atr */
+            atr: number;
+            /** Sl Points */
+            sl_points: number;
+            /** Sl Atr Mult */
+            sl_atr_mult: number;
+            /** Tp1 Points */
+            tp1_points: number;
+            /** Tp2 Points */
+            tp2_points: number;
+            /** Invalidation */
+            invalidation: string;
+            /** Reasons */
+            reasons: string[];
+            /** Risks */
+            risks: string[];
+            /**
+             * Valid Until
+             * Format: date-time
+             */
+            valid_until: string;
+            /** Status */
+            status: string;
+            /** Broker Offset */
+            broker_offset?: number | null;
+            /** Broker Profile */
+            broker_profile?: string | null;
+            /** Suggested Lot */
+            suggested_lot?: number | null;
+            /** Actual Risk Usd */
+            actual_risk_usd?: number | null;
+            /** Actual Risk Pct */
+            actual_risk_pct?: number | null;
+            /**
+             * Min Lot Warning
+             * @default false
+             */
+            min_lot_warning: boolean;
+            /** Warning Message */
+            warning_message?: string | null;
+            /** Text Full */
+            text_full?: string | null;
+            /** Text Compact */
+            text_compact?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
         };
         /**
          * TotpDisableRequest
@@ -1428,6 +1990,381 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SignalsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_tickets_api_tickets_get: {
+        parameters: {
+            query?: {
+                /** @description Filter by symbol */
+                symbol?: string | null;
+                /** @description Filter by status */
+                status?: string | null;
+                limit?: number;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_ticket_api_tickets__ticket_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                ticket_id: number;
+            };
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    execute_ticket_endpoint_api_tickets__ticket_id__execute_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                ticket_id: number;
+            };
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExecuteTicketRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RealExecutionResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    close_ticket_endpoint_api_tickets__ticket_id__close_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                ticket_id: number;
+            };
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CloseTicketRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RealExecutionResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    skip_ticket_endpoint_api_tickets__ticket_id__skip_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                ticket_id: number;
+            };
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_calibration_api_calibrations_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CalibrationRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CalibrationResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_latest_calibration_endpoint_api_calibrations_latest_get: {
+        parameters: {
+            query: {
+                /** @description Symbol e.g. XAUUSD */
+                symbol: string;
+                /** @description Broker profile filter */
+                broker_profile?: string | null;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CalibrationResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_paper_trades_api_paper_trades_get: {
+        parameters: {
+            query?: {
+                /** @description Filter by symbol */
+                symbol?: string | null;
+                /** @description Filter by status OPEN or CLOSED */
+                status?: string | null;
+                /** @description Filter virtual (simulated blocked signals) */
+                is_virtual?: boolean | null;
+                limit?: number;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaperTradeResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_paper_account_api_paper_account_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaperAccountResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    close_paper_trade_api_paper_trades__trade_id__close_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                trade_id: number;
+            };
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClosePaperTradeRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaperTradeResponse"];
                 };
             };
             /** @description Validation Error */

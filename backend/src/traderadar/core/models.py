@@ -236,3 +236,193 @@ class SignalRecord(Base):
     analysis: Mapped["AnalysisRecord | None"] = relationship(
         "AnalysisRecord", back_populates="signals"
     )
+    ticket: Mapped["TicketRecord | None"] = relationship(
+        "TicketRecord", back_populates="signal", uselist=False
+    )
+    paper_trades: Mapped[list["PaperTradeRecord"]] = relationship(
+        "PaperTradeRecord", back_populates="signal"
+    )
+
+
+class TicketRecord(Base):
+    """Trade tickets ready for execution (BLUEPRINT.md §5.3)."""
+
+    __tablename__ = "tickets"
+
+    id: Mapped[int] = mapped_column(
+        Integer().with_variant(BigInteger, "postgresql"), primary_key=True, autoincrement=True
+    )
+    signal_id: Mapped[int | None] = mapped_column(
+        BigInteger,
+        ForeignKey("signals.id", ondelete="SET NULL"),
+        unique=True,
+        nullable=True,
+        index=True,
+    )
+    symbol: Mapped[str] = mapped_column(String(32), index=True, nullable=False)
+    side: Mapped[str] = mapped_column(String(16), nullable=False)
+    strategy: Mapped[str] = mapped_column(String(32), nullable=False, default="Konfluensi-10")
+    score: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    source: Mapped[str] = mapped_column(String(64), nullable=False)
+    entry: Mapped[float] = mapped_column(Float, nullable=False)
+    entry_low: Mapped[float] = mapped_column(Float, nullable=False)
+    entry_high: Mapped[float] = mapped_column(Float, nullable=False)
+    sl: Mapped[float] = mapped_column(Float, nullable=False)
+    tp1: Mapped[float] = mapped_column(Float, nullable=False)
+    tp2: Mapped[float] = mapped_column(Float, nullable=False)
+    atr: Mapped[float] = mapped_column(Float, nullable=False)
+    sl_points: Mapped[float] = mapped_column(Float, nullable=False)
+    sl_atr_mult: Mapped[float] = mapped_column(Float, nullable=False)
+    tp1_points: Mapped[float] = mapped_column(Float, nullable=False)
+    tp2_points: Mapped[float] = mapped_column(Float, nullable=False)
+    invalidation: Mapped[str] = mapped_column(String(255), nullable=False)
+    reasons: Mapped[list[str]] = mapped_column(
+        JSON().with_variant(JSONB, "postgresql"), nullable=False, default=list
+    )
+    risks: Mapped[list[str]] = mapped_column(
+        JSON().with_variant(JSONB, "postgresql"), nullable=False, default=list
+    )
+    valid_until: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), index=True, nullable=False
+    )
+    status: Mapped[str] = mapped_column(
+        String(32), index=True, nullable=False, default="new"
+    )  # new | executed | skipped | expired | closed
+    broker_offset: Mapped[float | None] = mapped_column(Float, nullable=True)
+    broker_profile: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    suggested_lot: Mapped[float | None] = mapped_column(Float, nullable=True)
+    actual_risk_usd: Mapped[float | None] = mapped_column(Float, nullable=True)
+    actual_risk_pct: Mapped[float | None] = mapped_column(Float, nullable=True)
+    min_lot_warning: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    warning_message: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=utc_now
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=utc_now, onupdate=utc_now
+    )
+
+    signal: Mapped["SignalRecord | None"] = relationship(
+        "SignalRecord", back_populates="ticket"
+    )
+    executions: Mapped[list["RealExecutionRecord"]] = relationship(
+        "RealExecutionRecord", back_populates="ticket", cascade="all, delete-orphan"
+    )
+    paper_trades: Mapped[list["PaperTradeRecord"]] = relationship(
+        "PaperTradeRecord", back_populates="ticket"
+    )
+
+
+class RealExecutionRecord(Base):
+    """Manual real execution journal entry (BLUEPRINT.md §5.3)."""
+
+    __tablename__ = "real_executions"
+
+    id: Mapped[int] = mapped_column(
+        Integer().with_variant(BigInteger, "postgresql"), primary_key=True, autoincrement=True
+    )
+    ticket_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("tickets.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    broker_profile: Mapped[str] = mapped_column(String(64), nullable=False)
+    fill_price: Mapped[float] = mapped_column(Float, nullable=False)
+    lot: Mapped[float] = mapped_column(Float, nullable=False)
+    fill_time: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=utc_now
+    )
+    exit_price: Mapped[float | None] = mapped_column(Float, nullable=True)
+    exit_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    pnl_usd: Mapped[float | None] = mapped_column(Float, nullable=True)
+    pnl_r: Mapped[float | None] = mapped_column(Float, nullable=True)
+    slippage_points: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    notes: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    source: Mapped[str] = mapped_column(
+        String(32), nullable=False, default="ui"
+    )  # ui | telegram
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=utc_now
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=utc_now, onupdate=utc_now
+    )
+
+    ticket: Mapped["TicketRecord"] = relationship(
+        "TicketRecord", back_populates="executions"
+    )
+
+
+class PaperTradeRecord(Base):
+    """Simulated paper trading position and history (BLUEPRINT.md §5.5)."""
+
+    __tablename__ = "paper_trades"
+
+    id: Mapped[int] = mapped_column(
+        Integer().with_variant(BigInteger, "postgresql"), primary_key=True, autoincrement=True
+    )
+    ticket_id: Mapped[int | None] = mapped_column(
+        BigInteger, ForeignKey("tickets.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    signal_id: Mapped[int | None] = mapped_column(
+        BigInteger, ForeignKey("signals.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    strategy: Mapped[str] = mapped_column(String(32), index=True, nullable=False)
+    symbol: Mapped[str] = mapped_column(String(32), index=True, nullable=False)
+    side: Mapped[str] = mapped_column(String(16), nullable=False)
+    entry_time: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), index=True, nullable=False
+    )
+    entry_price: Mapped[float] = mapped_column(Float, nullable=False)
+    size: Mapped[float] = mapped_column(Float, nullable=False)
+    sl: Mapped[float] = mapped_column(Float, nullable=False)
+    tp1: Mapped[float] = mapped_column(Float, nullable=False)
+    tp2: Mapped[float] = mapped_column(Float, nullable=False)
+    tp1_hit: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    bars_held: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    status: Mapped[str] = mapped_column(
+        String(32), index=True, nullable=False, default="OPEN"
+    )  # OPEN | CLOSED
+    exit_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    exit_price: Mapped[float | None] = mapped_column(Float, nullable=True)
+    exit_reason: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    pnl_usd: Mapped[float | None] = mapped_column(Float, nullable=True)
+    pnl_r: Mapped[float | None] = mapped_column(Float, nullable=True)
+    fees_usd: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    mfe_r: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    mae_r: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    is_virtual: Mapped[bool] = mapped_column(
+        Boolean, index=True, nullable=False, default=False
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=utc_now
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=utc_now, onupdate=utc_now
+    )
+
+    ticket: Mapped["TicketRecord | None"] = relationship(
+        "TicketRecord", back_populates="paper_trades"
+    )
+    signal: Mapped["SignalRecord | None"] = relationship(
+        "SignalRecord", back_populates="paper_trades"
+    )
+
+
+class BrokerCalibrationRecord(Base):
+    """Broker price calibration offset record (BLUEPRINT.md §5.3)."""
+
+    __tablename__ = "broker_calibrations"
+
+    id: Mapped[int] = mapped_column(
+        Integer().with_variant(BigInteger, "postgresql"), primary_key=True, autoincrement=True
+    )
+    symbol: Mapped[str] = mapped_column(String(32), index=True, nullable=False)
+    broker_profile: Mapped[str] = mapped_column(String(64), index=True, nullable=False)
+    broker_price: Mapped[float] = mapped_column(Float, nullable=False)
+    source_price: Mapped[float] = mapped_column(Float, nullable=False)
+    offset: Mapped[float] = mapped_column(Float, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=utc_now
+    )
+    expires_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), index=True, nullable=False
+    )

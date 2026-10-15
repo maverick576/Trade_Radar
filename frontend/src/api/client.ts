@@ -65,3 +65,19 @@ export type ScoreHistoryResponse =
 export type SignalsResponse =
   paths["/api/signals"]["get"]["responses"][200]["content"]["application/json"];
 export type SignalItem = SignalsResponse["signals"][number];
+export type TicketItem =
+  paths["/api/tickets"]["get"]["responses"][200]["content"]["application/json"][number];
+export type ExecuteTicketPayload =
+  paths["/api/tickets/{ticket_id}/execute"]["post"]["requestBody"]["content"]["application/json"];
+export type CloseTicketPayload =
+  paths["/api/tickets/{ticket_id}/close"]["post"]["requestBody"]["content"]["application/json"];
+export type CalibrationPayload =
+  paths["/api/calibrations"]["post"]["requestBody"]["content"]["application/json"];
+export type CalibrationResponse =
+  paths["/api/calibrations"]["post"]["responses"][200]["content"]["application/json"];
+export type PaperTradeItem =
+  paths["/api/paper/trades"]["get"]["responses"][200]["content"]["application/json"][number];
+export type PaperAccountResponse =
+  paths["/api/paper/account"]["get"]["responses"][200]["content"]["application/json"];
+export type ClosePaperTradePayload =
+  paths["/api/paper/trades/{trade_id}/close"]["post"]["requestBody"]["content"]["application/json"];

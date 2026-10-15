@@ -8,6 +8,8 @@ import { StatusPage } from "../../pages/StatusPage";
 import { PlaceholderPage } from "../../pages/PlaceholderPage";
 import { DashboardPage } from "../../pages/DashboardPage";
 import { AnalisaPage } from "../../pages/AnalisaPage";
+import { TicketPage } from "../../pages/TicketPage";
+import { PaperPage } from "../../pages/PaperPage";
 
 export const Shell: React.FC = () => {
   const [currentNav, setCurrentNav] = useState<NavItem>("dashboard");
@@ -83,12 +85,17 @@ export const Shell: React.FC = () => {
               <DashboardPage
                 onSelectSymbol={(sym) => setCurrentSymbol(sym)}
                 onNavigateToAnalisa={() => setCurrentNav("analisa")}
+                onNavigateToTicket={() => setCurrentNav("ticket")}
               />
             ) : currentNav === "analisa" ? (
               <AnalisaPage
                 symbol={currentSymbol}
                 onSelectSymbol={(sym) => setCurrentSymbol(sym)}
               />
+            ) : currentNav === "ticket" ? (
+              <TicketPage initialSymbol={currentSymbol} />
+            ) : currentNav === "paper" ? (
+              <PaperPage />
             ) : currentNav === "status" ? (
               <StatusPage />
             ) : (

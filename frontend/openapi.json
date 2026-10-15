@@ -1336,6 +1336,902 @@
           }
         }
       }
+    },
+    "/api/tickets": {
+      "get": {
+        "tags": [
+          "Tickets & Real Executions"
+        ],
+        "summary": "List Tickets",
+        "description": "List trade tickets with optional filters.",
+        "operationId": "list_tickets_api_tickets_get",
+        "parameters": [
+          {
+            "name": "symbol",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by symbol",
+              "title": "Symbol"
+            },
+            "description": "Filter by symbol"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by status",
+              "title": "Status"
+            },
+            "description": "Filter by status"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TicketResponse"
+                  },
+                  "title": "Response List Tickets Api Tickets Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/tickets/{ticket_id}": {
+      "get": {
+        "tags": [
+          "Tickets & Real Executions"
+        ],
+        "summary": "Get Ticket",
+        "description": "Get single ticket details with active broker calibration.",
+        "operationId": "get_ticket_api_tickets__ticket_id__get",
+        "parameters": [
+          {
+            "name": "ticket_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Ticket Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/tickets/{ticket_id}/execute": {
+      "post": {
+        "tags": [
+          "Tickets & Real Executions"
+        ],
+        "summary": "Execute Ticket Endpoint",
+        "description": "Record that the user has manually executed the ticket at a broker.",
+        "operationId": "execute_ticket_endpoint_api_tickets__ticket_id__execute_post",
+        "parameters": [
+          {
+            "name": "ticket_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Ticket Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExecuteTicketRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RealExecutionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/tickets/{ticket_id}/close": {
+      "post": {
+        "tags": [
+          "Tickets & Real Executions"
+        ],
+        "summary": "Close Ticket Endpoint",
+        "description": "Close an executed trade and record PnL in the real execution journal.",
+        "operationId": "close_ticket_endpoint_api_tickets__ticket_id__close_post",
+        "parameters": [
+          {
+            "name": "ticket_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Ticket Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CloseTicketRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RealExecutionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/tickets/{ticket_id}/skip": {
+      "post": {
+        "tags": [
+          "Tickets & Real Executions"
+        ],
+        "summary": "Skip Ticket Endpoint",
+        "description": "Mark a trade ticket as skipped.",
+        "operationId": "skip_ticket_endpoint_api_tickets__ticket_id__skip_post",
+        "parameters": [
+          {
+            "name": "ticket_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Ticket Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/calibrations": {
+      "post": {
+        "tags": [
+          "Broker Calibrations"
+        ],
+        "summary": "Create Calibration",
+        "description": "Set broker price offset valid for 30 minutes.",
+        "operationId": "create_calibration_api_calibrations_post",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CalibrationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalibrationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/calibrations/latest": {
+      "get": {
+        "tags": [
+          "Broker Calibrations"
+        ],
+        "summary": "Get Latest Calibration Endpoint",
+        "description": "Retrieve active broker calibration offset if not expired.",
+        "operationId": "get_latest_calibration_endpoint_api_calibrations_latest_get",
+        "parameters": [
+          {
+            "name": "symbol",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Symbol e.g. XAUUSD",
+              "title": "Symbol"
+            },
+            "description": "Symbol e.g. XAUUSD"
+          },
+          {
+            "name": "broker_profile",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Broker profile filter",
+              "title": "Broker Profile"
+            },
+            "description": "Broker profile filter"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalibrationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/paper/trades": {
+      "get": {
+        "tags": [
+          "Paper Trading"
+        ],
+        "summary": "List Paper Trades",
+        "description": "List paper trading positions and history.",
+        "operationId": "list_paper_trades_api_paper_trades_get",
+        "parameters": [
+          {
+            "name": "symbol",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by symbol",
+              "title": "Symbol"
+            },
+            "description": "Filter by symbol"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by status OPEN or CLOSED",
+              "title": "Status"
+            },
+            "description": "Filter by status OPEN or CLOSED"
+          },
+          {
+            "name": "is_virtual",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter virtual (simulated blocked signals)",
+              "title": "Is Virtual"
+            },
+            "description": "Filter virtual (simulated blocked signals)"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PaperTradeResponse"
+                  },
+                  "title": "Response List Paper Trades Api Paper Trades Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/paper/account": {
+      "get": {
+        "tags": [
+          "Paper Trading"
+        ],
+        "summary": "Get Paper Account",
+        "description": "Get current virtual account summary, PnL, and daily limits.",
+        "operationId": "get_paper_account_api_paper_account_get",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaperAccountResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/paper/trades/{trade_id}/close": {
+      "post": {
+        "tags": [
+          "Paper Trading"
+        ],
+        "summary": "Close Paper Trade",
+        "description": "Manually close an open paper trade.",
+        "operationId": "close_paper_trade_api_paper_trades__trade_id__close_post",
+        "parameters": [
+          {
+            "name": "trade_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Trade Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClosePaperTradeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaperTradeResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1431,6 +2327,90 @@
         "title": "AnalysisResponse",
         "description": "Full confluence analysis response schema."
       },
+      "CalibrationRequest": {
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "title": "Symbol",
+            "description": "Symbol, e.g. 'XAUUSD'"
+          },
+          "broker_profile": {
+            "type": "string",
+            "title": "Broker Profile",
+            "description": "Broker profile name"
+          },
+          "broker_price": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Broker Price",
+            "description": "Current price displayed at broker terminal"
+          }
+        },
+        "type": "object",
+        "required": [
+          "symbol",
+          "broker_profile",
+          "broker_price"
+        ],
+        "title": "CalibrationRequest",
+        "description": "Request payload to set broker price offset."
+      },
+      "CalibrationResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "symbol": {
+            "type": "string",
+            "title": "Symbol"
+          },
+          "broker_profile": {
+            "type": "string",
+            "title": "Broker Profile"
+          },
+          "broker_price": {
+            "type": "number",
+            "title": "Broker Price"
+          },
+          "source_price": {
+            "type": "number",
+            "title": "Source Price"
+          },
+          "offset": {
+            "type": "number",
+            "title": "Offset"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Expires At"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "symbol",
+          "broker_profile",
+          "broker_price",
+          "source_price",
+          "offset",
+          "created_at",
+          "expires_at"
+        ],
+        "title": "CalibrationResponse",
+        "description": "Schema for broker price calibration offset."
+      },
       "CandleItem": {
         "properties": {
           "symbol": {
@@ -1523,6 +2503,142 @@
         ],
         "title": "ChangePasswordRequest",
         "description": "Payload to update password."
+      },
+      "ClosePaperTradeRequest": {
+        "properties": {
+          "exit_price": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Exit Price",
+            "description": "Exit price"
+          },
+          "exit_time": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exit Time",
+            "description": "Optional exit timestamp"
+          },
+          "exit_reason": {
+            "type": "string",
+            "title": "Exit Reason",
+            "description": "Reason for closing",
+            "default": "MANUAL"
+          }
+        },
+        "type": "object",
+        "required": [
+          "exit_price"
+        ],
+        "title": "ClosePaperTradeRequest",
+        "description": "Request payload to manually close an open paper trade."
+      },
+      "CloseTicketRequest": {
+        "properties": {
+          "exit_price": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Exit Price",
+            "description": "Actual exit fill price"
+          },
+          "exit_time": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exit Time",
+            "description": "Exit time (UTC)"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes",
+            "description": "Optional notes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "exit_price"
+        ],
+        "title": "CloseTicketRequest",
+        "description": "Request payload to record real trade close."
+      },
+      "ExecuteTicketRequest": {
+        "properties": {
+          "broker_profile": {
+            "type": "string",
+            "title": "Broker Profile",
+            "description": "Broker profile name, e.g. 'Exness Standard'"
+          },
+          "fill_price": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Fill Price",
+            "description": "Actual filled price at the broker"
+          },
+          "lot": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Lot",
+            "description": "Actual executed lot size"
+          },
+          "fill_time": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fill Time",
+            "description": "Execution time (UTC)"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source",
+            "description": "Origin of execution: 'ui' or 'telegram'",
+            "default": "ui"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes",
+            "description": "Optional notes or trade tags"
+          }
+        },
+        "type": "object",
+        "required": [
+          "broker_profile",
+          "fill_price",
+          "lot"
+        ],
+        "title": "ExecuteTicketRequest",
+        "description": "Request payload to record real trade execution."
       },
       "FullHealthResponse": {
         "properties": {
@@ -1874,6 +2990,367 @@
         "title": "MessageResponse",
         "description": "Standard generic message response."
       },
+      "PaperAccountResponse": {
+        "properties": {
+          "initial_equity": {
+            "type": "number",
+            "title": "Initial Equity"
+          },
+          "equity": {
+            "type": "number",
+            "title": "Equity"
+          },
+          "realized_pnl_usd": {
+            "type": "number",
+            "title": "Realized Pnl Usd"
+          },
+          "daily_pnl_usd": {
+            "type": "number",
+            "title": "Daily Pnl Usd"
+          },
+          "daily_loss_limit_hit": {
+            "type": "boolean",
+            "title": "Daily Loss Limit Hit"
+          },
+          "open_positions_count": {
+            "type": "integer",
+            "title": "Open Positions Count"
+          },
+          "total_closed_trades": {
+            "type": "integer",
+            "title": "Total Closed Trades"
+          },
+          "winrate_pct": {
+            "type": "number",
+            "title": "Winrate Pct"
+          },
+          "expectancy_r": {
+            "type": "number",
+            "title": "Expectancy R"
+          }
+        },
+        "type": "object",
+        "required": [
+          "initial_equity",
+          "equity",
+          "realized_pnl_usd",
+          "daily_pnl_usd",
+          "daily_loss_limit_hit",
+          "open_positions_count",
+          "total_closed_trades",
+          "winrate_pct",
+          "expectancy_r"
+        ],
+        "title": "PaperAccountResponse",
+        "description": "Schema for paper trading account summary metrics."
+      },
+      "PaperTradeResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "ticket_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ticket Id"
+          },
+          "signal_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signal Id"
+          },
+          "strategy": {
+            "type": "string",
+            "title": "Strategy"
+          },
+          "symbol": {
+            "type": "string",
+            "title": "Symbol"
+          },
+          "side": {
+            "type": "string",
+            "enum": [
+              "LONG",
+              "SHORT"
+            ],
+            "title": "Side"
+          },
+          "entry_time": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Entry Time"
+          },
+          "entry_price": {
+            "type": "number",
+            "title": "Entry Price"
+          },
+          "size": {
+            "type": "number",
+            "title": "Size"
+          },
+          "sl": {
+            "type": "number",
+            "title": "Sl"
+          },
+          "tp1": {
+            "type": "number",
+            "title": "Tp1"
+          },
+          "tp2": {
+            "type": "number",
+            "title": "Tp2"
+          },
+          "tp1_hit": {
+            "type": "boolean",
+            "title": "Tp1 Hit"
+          },
+          "bars_held": {
+            "type": "integer",
+            "title": "Bars Held"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "exit_time": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exit Time"
+          },
+          "exit_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exit Price"
+          },
+          "exit_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exit Reason"
+          },
+          "pnl_usd": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pnl Usd"
+          },
+          "pnl_r": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pnl R"
+          },
+          "fees_usd": {
+            "type": "number",
+            "title": "Fees Usd"
+          },
+          "mfe_r": {
+            "type": "number",
+            "title": "Mfe R"
+          },
+          "mae_r": {
+            "type": "number",
+            "title": "Mae R"
+          },
+          "is_virtual": {
+            "type": "boolean",
+            "title": "Is Virtual"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "strategy",
+          "symbol",
+          "side",
+          "entry_time",
+          "entry_price",
+          "size",
+          "sl",
+          "tp1",
+          "tp2",
+          "tp1_hit",
+          "bars_held",
+          "status",
+          "fees_usd",
+          "mfe_r",
+          "mae_r",
+          "is_virtual",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "PaperTradeResponse",
+        "description": "Schema for returning paper trade positions."
+      },
+      "RealExecutionResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "ticket_id": {
+            "type": "integer",
+            "title": "Ticket Id"
+          },
+          "broker_profile": {
+            "type": "string",
+            "title": "Broker Profile"
+          },
+          "fill_price": {
+            "type": "number",
+            "title": "Fill Price"
+          },
+          "lot": {
+            "type": "number",
+            "title": "Lot"
+          },
+          "fill_time": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Fill Time"
+          },
+          "exit_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exit Price"
+          },
+          "exit_time": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exit Time"
+          },
+          "pnl_usd": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pnl Usd"
+          },
+          "pnl_r": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pnl R"
+          },
+          "slippage_points": {
+            "type": "number",
+            "title": "Slippage Points"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "ticket_id",
+          "broker_profile",
+          "fill_price",
+          "lot",
+          "fill_time",
+          "slippage_points",
+          "source",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "RealExecutionResponse",
+        "description": "Schema for returned real execution record."
+      },
       "ScoreHistoryItem": {
         "properties": {
           "bar_time": {
@@ -2213,6 +3690,252 @@
         ],
         "title": "SymbolsResponse",
         "description": "List of active symbols."
+      },
+      "TicketResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "signal_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signal Id"
+          },
+          "symbol": {
+            "type": "string",
+            "title": "Symbol"
+          },
+          "side": {
+            "type": "string",
+            "enum": [
+              "LONG",
+              "SHORT"
+            ],
+            "title": "Side"
+          },
+          "strategy": {
+            "type": "string",
+            "title": "Strategy"
+          },
+          "score": {
+            "type": "number",
+            "title": "Score"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "entry": {
+            "type": "number",
+            "title": "Entry"
+          },
+          "entry_low": {
+            "type": "number",
+            "title": "Entry Low"
+          },
+          "entry_high": {
+            "type": "number",
+            "title": "Entry High"
+          },
+          "sl": {
+            "type": "number",
+            "title": "Sl"
+          },
+          "tp1": {
+            "type": "number",
+            "title": "Tp1"
+          },
+          "tp2": {
+            "type": "number",
+            "title": "Tp2"
+          },
+          "atr": {
+            "type": "number",
+            "title": "Atr"
+          },
+          "sl_points": {
+            "type": "number",
+            "title": "Sl Points"
+          },
+          "sl_atr_mult": {
+            "type": "number",
+            "title": "Sl Atr Mult"
+          },
+          "tp1_points": {
+            "type": "number",
+            "title": "Tp1 Points"
+          },
+          "tp2_points": {
+            "type": "number",
+            "title": "Tp2 Points"
+          },
+          "invalidation": {
+            "type": "string",
+            "title": "Invalidation"
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Reasons"
+          },
+          "risks": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Risks"
+          },
+          "valid_until": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Valid Until"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "broker_offset": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Broker Offset"
+          },
+          "broker_profile": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Broker Profile"
+          },
+          "suggested_lot": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Suggested Lot"
+          },
+          "actual_risk_usd": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actual Risk Usd"
+          },
+          "actual_risk_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actual Risk Pct"
+          },
+          "min_lot_warning": {
+            "type": "boolean",
+            "title": "Min Lot Warning",
+            "default": false
+          },
+          "warning_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Warning Message"
+          },
+          "text_full": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Text Full"
+          },
+          "text_compact": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Text Compact"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "symbol",
+          "side",
+          "strategy",
+          "score",
+          "source",
+          "entry",
+          "entry_low",
+          "entry_high",
+          "sl",
+          "tp1",
+          "tp2",
+          "atr",
+          "sl_points",
+          "sl_atr_mult",
+          "tp1_points",
+          "tp2_points",
+          "invalidation",
+          "reasons",
+          "risks",
+          "valid_until",
+          "status",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "TicketResponse",
+        "description": "Schema for returning Trade Tickets."
       },
       "TotpDisableRequest": {
         "properties": {

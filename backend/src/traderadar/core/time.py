@@ -12,6 +12,13 @@ def utc_now() -> datetime:
     return datetime.now(UTC_TZ)
 
 
+def ensure_utc(dt: datetime) -> datetime:
+    """Ensure datetime is timezone-aware in UTC."""
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=UTC_TZ)
+    return dt.astimezone(UTC_TZ)
+
+
 def to_wib(dt: datetime) -> datetime:
     """Convert any aware datetime to Asia/Jakarta (WIB). If naive, assume UTC first."""
     if dt.tzinfo is None:

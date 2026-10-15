@@ -27,11 +27,13 @@ import { ScoreGauge } from "../components/ui/ScoreGauge";
 import { MacroChecklist, type MacroCheckItem } from "../components/ui/MacroChecklist";
 import { StrategyBPanel, type StrategyBData } from "../components/ui/StrategyBPanel";
 import { useMarket } from "../context/MarketContext";
+import { TicketCard } from "../features/tickets/TicketCard";
 import {
   apiClient,
   type CandleItem,
   type AnalysisResponse,
   type SignalsResponse,
+  type TicketItem,
 } from "../api/client";
 
 interface IndicatorResultItem {
@@ -94,6 +96,7 @@ export const AnalisaPage: React.FC<AnalisaPageProps> = ({
   const [signalMarkers, setSignalMarkers] = useState<SignalChartMarker[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [lastTickPrice, setLastTickPrice] = useState<number | null>(null);
+  const [activeTicket, setActiveTicket] = useState<TicketItem | null>(null);
   const [priceFlash, setPriceFlash] = useState<"up" | "down" | null>(null);
 
   // Overlay and Pane Toggles
@@ -244,12 +247,35 @@ export const AnalisaPage: React.FC<AnalisaPageProps> = ({
     }
   }, [querySymbol]);
 
+  // Fetch active ticket for this symbol
+  const fetchTicket = useCallback(async () => {
+    try {
+      const res = await apiClient.GET("/api/tickets", {
+        params: {
+          query: {
+            symbol: querySymbol,
+            status: "new",
+            limit: 1,
+          },
+        },
+      });
+      if (res.data && Array.isArray(res.data) && res.data.length > 0) {
+        setActiveTicket(res.data[0] as TicketItem);
+      } else {
+        setActiveTicket(null);
+      }
+    } catch (err) {
+      console.error("Gagal memuat trade ticket:", err);
+    }
+  }, [querySymbol]);
+
   useEffect(() => {
     fetchCandles();
     fetchIndicators();
     fetchAnalysis();
     fetchScoreHistory();
     fetchSignals();
+    fetchTicket();
     subscribe([querySymbol, symbol], [selectedTf]);
   }, [
     fetchCandles,
@@ -257,6 +283,7 @@ export const AnalisaPage: React.FC<AnalisaPageProps> = ({
     fetchAnalysis,
     fetchScoreHistory,
     fetchSignals,
+    fetchTicket,
     querySymbol,
     symbol,
     selectedTf,
@@ -635,41 +662,49 @@ export const AnalisaPage: React.FC<AnalisaPageProps> = ({
           )}
         </div>
 
-        {/* 3. Trade Ticket & AI Commentary Teaser Cards */}
+        {/* 3. Trade Ticket & AI Commentary Cards */}
         <div className="space-y-4">
-          {/* Trade Ticket Teaser (Fase 5) */}
-          <div className="p-4 rounded-xl bg-surface border border-border shadow-sm space-y-3">
-            <div className="flex items-center justify-between border-b border-border/60 pb-2.5">
-              <div className="flex items-center gap-2">
-                <Zap className="w-4 h-4 text-emerald-400" />
-                <h3 className="text-sm font-bold text-fg tracking-wide">
-                  Trade Ticket (Eksekusi Manual)
-                </h3>
-              </div>
-              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-accent/10 border border-accent/20 text-accent font-mono">
-                Fase 5 Ready
-              </span>
-            </div>
-
-            {analysisData?.verdict.includes("STRONG") ? (
-              <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-xs text-fg space-y-2">
-                <div className="flex items-center justify-between font-bold">
-                  <span className="text-emerald-400">
-                    🟢 TIKET AKTIF: {analysisData.verdict}
-                  </span>
-                  <span className="font-mono text-muted">Skor: {analysisData.score}</span>
+          {activeTicket ? (
+            <TicketCard
+              ticket={activeTicket}
+              onRefresh={() => {
+                fetchTicket();
+                fetchAnalysis();
+              }}
+            />
+          ) : (
+            <div className="p-4 rounded-xl bg-surface border border-border shadow-sm space-y-3">
+              <div className="flex items-center justify-between border-b border-border/60 pb-2.5">
+                <div className="flex items-center gap-2">
+                  <Zap className="w-4 h-4 text-emerald-400" />
+                  <h3 className="text-sm font-bold text-fg tracking-wide">
+                    Trade Ticket (Eksekusi Manual)
+                  </h3>
                 </div>
-                <p className="text-[11px] text-muted leading-tight">
-                  Sinyal kuat terkonfirmasi dan lolos Macro Filter. Siap dikalibrasi ke broker
-                  CFD/Futures dengan kalkulator lot otomatis.
-                </p>
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-muted/20 border border-border text-muted font-mono">
+                  Siaga
+                </span>
               </div>
-            ) : (
-              <div className="p-3 rounded-lg bg-surface-2/40 text-xs text-muted leading-relaxed">
-                Trade Ticket dihasilkan otomatis saat skor konfluensi mencapai ambang <strong>STRONG BUY</strong> (≥ 55) atau <strong>STRONG SELL</strong> (≤ -55) dan lolos semua filter macro.
-              </div>
-            )}
-          </div>
+
+              {analysisData?.verdict.includes("STRONG") ? (
+                <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-xs text-fg space-y-2">
+                  <div className="flex items-center justify-between font-bold">
+                    <span className="text-emerald-400">
+                      🟢 SINYAL AKTIF: {analysisData.verdict}
+                    </span>
+                    <span className="font-mono text-muted">Skor: {analysisData.score}</span>
+                  </div>
+                  <p className="text-[11px] text-muted leading-tight">
+                    Sinyal konfluensi kuat terkonfirmasi dan lolos Macro Filter.
+                  </p>
+                </div>
+              ) : (
+                <div className="p-3 rounded-lg bg-surface-2/40 text-xs text-muted leading-relaxed">
+                  Trade Ticket dihasilkan otomatis saat skor konfluensi mencapai ambang <strong>STRONG BUY</strong> (≥ 55) atau <strong>STRONG SELL</strong> (≤ -55) dan lolos semua filter macro.
+                </div>
+              )}
+            </div>
+          )}
 
           {/* AI Commentary Teaser (Fase 6) */}
           <div className="p-4 rounded-xl bg-surface border border-border shadow-sm space-y-3">

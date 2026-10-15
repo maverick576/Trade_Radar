@@ -136,4 +136,45 @@ Dokumen ini mencatat keputusan teknis, pinning versi, dan verifikasi asumsi ekst
   5. **Arsitektur Layout UI Terminal 3-Kolom:**
      - Desain modular: Chart & Mini Score History 48-jam (kiri), ScoreGauge & 10 Kartu Indikator per Kategori (tengah), Macro Checklist M1-M8 & Strategy B & Teaser Ticket/AI (kanan).
 
+---
+
+## ADR-007: Trade Ticket, Kalibrasi Broker, dan Paper Trading Engine (Fase 5)
+- **Tanggal:** 15 Oktober 2026
+- **Status:** Diterima
+- **Keputusan Teknis & Arsitektur:**
+  1. **Formulasi Trade Ticket & Kalkulator Lot Presisi (`risk.py`, `ticket.py`):**
+     - Sesuai spesifikasi `BLUEPRINT.md` §5.3:
+       - Entry: $2651.0$, SL: $2636.5$ ($1.5 \times ATR$), TP1: $2665.5$ ($1.0 \times R$), TP2: $2680.0$ ($2.0 \times R$).
+       - Kalkulasi lot ukuran risiko tetap $1\%$ dari saldo $\$10,000$ (risiko $\$100$) dengan ukuran kontrak 100 oz:
+         $$\text{Raw Lot} = \frac{100}{14.5 \times 100} = 0.0689655\dots \xrightarrow{\text{floor step 0.01}} 0.06 \text{ lot}$$
+       - Risiko aktual: $0.06 \times 14.5 \times 100 = \$87.0$ ($0.87\%$).
+       - Format Salin Ringkas: `BUY XAUUSD 2651 SL 2636.5 TP 2665.5/2680 0.06lot`.
+       - Format Salin Lengkap: teks Indonesia terstruktur dengan zona entry, invalidasi, dan checklist risiko.
+  2. **Kalibrasi Harga Broker CFD / Futures (`broker_calibrations`):**
+     - Offset dihitung sebagai $\Delta = P_{\text{broker}} - P_{\text{source}}$.
+     - Masa berlaku aktif calibration: 4 jam (otomatis invalid jika stale).
+     - Menampilkan perbandingan harga Source vs Broker vs Jarak Relatif di UI Ticket.
+  3. **Kriteria Kedaluwarsa & Pembatalan Tiket:**
+     - `EXPIRED_TIME`: Melebihi validitas 3 bar ($45$ menit untuk timeframe M15).
+     - `CHASE_LIMIT`: Harga pasar live bergerak searah target $> 0.5 \times ATR$ dari zona entry sebelum sempat ter-fill.
+     - `SL_HIT_BEFORE_ENTRY`: Harga menyentuh level Stop Loss sebelum menyentuh zona entry.
+  4. **Paper Trading Engine Deterministik (`paper.py`, `paper_trades`):**
+     - Eksekusi fill pada candle open bar berikutnya dengan slippage taker 2 bps ($0.02\%$) dan fee taker $0.05\%$.
+     - Konservatisme candle: jika candle menyentuh level SL dan TP dalam bar yang sama, evaluasi SL diprioritaskan (Loss).
+     - Aturan Partial TP:
+       - TP1 hit $\rightarrow$ tutup $50\%$ posisi, geser Stop Loss ke Breakeven (BE).
+       - TP2 hit $\rightarrow$ tutup sisa $50\%$ posisi.
+     - Time Stop: jika posisi bertahan $\ge 32$ bar ($8$ jam pada M15), posisi ditutup otomatis pada candle close.
+     - Opposite Exit: jika sinyal kuat berlawanan terkonfirmasi, posisi aktif ditutup langsung.
+     - Batas Kerugian Harian (Daily Loss Limit): jika akumulasi kerugian hari ini mencapai $\ge 3\%$ dari modal awal ($\$1,000$), trading baru dihentikan.
+     - Simulasi Virtual: sinyal yang diblokir oleh macro filter tetap disimulasikan (`is_virtual = True`) untuk mengukur efektivitas filter makro.
+  5. **Pencatatan Eksekusi Nyata (`real_executions`):**
+     - Mematuhi aturan strict: TradeRadar **tidak pernah memanggil endpoint order exchange/broker**.
+     - Pengguna mencatat eksekusi manual via dialog UI (Fill price, lot, waktu, catatan), menghitung slippage nyata secara otomatis terhadap harga sinyal.
+  6. **UI & Integrasi Halaman Terminal:**
+     - Tab Navigasi Baru: **Ticket** (`TicketPage.tsx`) dan **Paper** (`PaperPage.tsx`).
+     - Kartu Ticket Aktif disematkan di kolom keputusan `AnalisaPage.tsx` dan cockpit `DashboardPage.tsx`.
+     - Dialog kalibrasi offset broker, pencatatan eksekusi nyata, dan konfirmasi penutupan posisi.
+
+
 

@@ -43,10 +43,10 @@ Estimasi: ±14–18 sesi agent.
 - **Selesai bila:** setiap close M15, UI ter-update ≤ 2 dtk; test scoring/macro/sesi lulus.
 
 ## Fase 5 — Trade Ticket, kalibrasi broker, paper trading
-- [ ] `risk.py`, `ticket.py` (zona, jarak relatif, invalidasi, kedaluwarsa), profil broker & kalkulator lot, kalibrasi offset.
-- [ ] Paper trader (fill next open, biaya, TP1→BE→TP2, time stop, opposite exit, limit harian) + simulasi virtual sinyal terblokir.
-- [ ] Eksekusi nyata: execute/close/skip ticket → `real_executions`.
-- [ ] UI Ticket & Sinyal (kartu ticket, dialog kalibrasi/eksekusi/tutup, Salin lengkap/ringkas), Posisi Paper.
+- [x] `risk.py`, `ticket.py` (zona, jarak relatif, invalidasi, kedaluwarsa), profil broker & kalkulator lot, kalibrasi offset.
+- [x] Paper trader (fill next open, biaya, TP1→BE→TP2, time stop, opposite exit, limit harian) + simulasi virtual sinyal terblokir.
+- [x] Eksekusi nyata: execute/close/skip ticket → `real_executions`.
+- [x] UI Ticket & Sinyal (kartu ticket, dialog kalibrasi/eksekusi/tutup, Salin lengkap/ringkas), Posisi Paper.
 - **Selesai bila:** test ticket & paper lulus; contoh di `BLUEPRINT.md` §5.3 direproduksi persis oleh test (entry 2651, SL 2636,5, TP 2665,5/2680, 0,06 lot untuk $10.000).
 
 ## Fase 6 — Komentar AI & Market Brief

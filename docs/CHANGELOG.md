@@ -3,6 +3,62 @@
 Semua perubahan penting pada TradeRadar didokumentasikan di file ini.
 Format mengikuti panduan [Keep a Changelog](https://keepachangelog.com/id/1.0.0/).
 
+## [Fase 5: Trade Ticket, Kalibrasi Broker, Paper Trading] - 2026-10-15
+
+### Ditambahkan
+- **Trade Ticket Generator & Risk Engine (`traderadar.engine.risk`, `traderadar.engine.ticket`):**
+  - Kalkulator ukuran lot deterministik berbasis alokasi risiko saldo akun (default 1% risiko dari $10.000 saldo), ukuran kontrak instrumen (mis. 100 oz untuk XAUUSD CFD), dan pembulatan ke bawah sesuai kelipatan step lot broker (`floor_to_step`).
+  - Reproduksi presisi contoh `BLUEPRINT.md` §5.3 terverifikasi oleh test: Entry 2651.0, SL 2636.5 (1.5×ATR), TP1 2665.5 (1.0R), TP2 2680.0 (2.0R), ukuran 0.06 lot untuk saldo $10.000, risiko aktual $87.0 (0.87%).
+  - Peringatan batas lot minimum (`min_lot_warning`) otomatis jika risiko pada 1 lot minimum broker melampaui toleransi risiko yang ditetapkan.
+  - Zona toleransi entry relatif ATR ($\pm 0.1 \times \text{ATR}$), evaluasi kedaluwarsa deterministik:
+    - `EXPIRED_TIME`: kedaluwarsa setelah 3 bar candle close (45 menit pada M15).
+    - `CHASE_LIMIT`: pembatalan tiket jika harga live melesat searah target $> 0.5 \times \text{ATR}$ sebelum sempat terisi.
+    - `SL_HIT_BEFORE_ENTRY`: pembatalan tiket jika harga pasar menyentuh SL sebelum menyentuh zona entry.
+  - Generator teks Bahasa Indonesia terstruktur:
+    - Format ringkas: `BUY XAUUSD 2651 SL 2636.5 TP 2665.5/2680 0.06lot`.
+    - Format lengkap: detail zona entry, level SL/TP, invalidasi, alasan konfluensi, dan checklist risiko makro.
+- **Kalibrasi Broker CFD & Futures (`traderadar.services.ticket_store`, `broker_calibrations`):**
+  - Mekanisme kalibrasi harga offset ($\Delta = P_{\text{broker}} - P_{\text{source}}$) dengan masa berlaku 4 jam.
+  - Penyesuaian otomatis seluruh level tiket (Entry, SL, TP) saat offset aktif, menyajikan perbandingan harga Sumber vs Broker vs Jarak Relatif di kartu tiket UI.
+- **Paper Trading Engine Lengkap (`traderadar.engine.paper`, `traderadar.services.paper_store`):**
+  - Eksekusi fill posisi pada Open candle bar berikutnya dengan slippage taker 2 bps (0.02%) dan fee taker 0.05%.
+  - Konservatisme bar: prioritas evaluasi Stop Loss jika candle menyentuh level SL dan TP dalam bar yang sama.
+  - Aturan Partial TP: TP1 menutup 50% posisi dan memindahkan SL ke Breakeven (BE); TP2 menutup sisa 50% posisi.
+  - Time Stop otomatis: posisi ditutup pada harga candle close setelah berjalan $\ge 32$ bar (8 jam pada M15).
+  - Opposite Exit: posisi ditutup segera bila muncul sinyal kuat berlawanan arah.
+  - Batas Kerugian Harian (Daily Loss Limit): penghentian order paper baru jika akumulasi kerugian hari ini mencapai $\ge 3\%$ dari modal awal ($1.000).
+  - Simulasi Virtual Sinyal Terblokir: sinyal yang dibatalkan oleh Macro Filter tetap disimulasikan (`is_virtual=True`) untuk evaluasi akurasi filter makro.
+- **Jurnal Eksekusi Nyata (`real_executions`):**
+  - Pencatatan eksekusi nyata dari pengguna (Fill price, lot, waktu, catatan) tanpa pernah memanggil endpoint eksekusi broker/exchange (read-only compliance).
+  - Kalkulasi otomatis slippage nyata terhadap harga referensi sinyal.
+- **Database & Model Penyimpanan:**
+  - Migrasi Alembic `004_create_phase5_tables.py` untuk tabel `tickets`, `broker_calibrations`, `paper_trades`, dan `real_executions`.
+  - SQLAlchemy models di `traderadar.core.models`.
+- **Integrasi Service Engine (`traderadar.services.engine`):**
+  - Pembentukan ticket otomatis saat sinyal `STRONG` terkonfirmasi lolos filter makro.
+  - Pembukaan posisi paper trade dan pembaruan berkala status posisi pada setiap event candle close M15.
+- **REST API Endpoints:**
+  - `/api/tickets`: daftar tiket dengan filter simbol dan status, detail tiket dengan kalibrasi broker.
+  - `/api/tickets/{id}/execute`, `/close`, `/skip`: manajemen eksekusi nyata dan pembatalan tiket.
+  - `/api/calibrations`, `/api/calibrations/active`: manajemen kalibrasi offset broker.
+  - `/api/paper/trades`, `/api/paper/metrics`, `/api/paper/trades/{id}/close`: pemantauan performa dan manajemen posisi paper trading.
+- **Frontend Professional UI (`frontend/`):**
+  - **Halaman Tiket & Sinyal (`TicketPage.tsx`):**
+    - Tab navigasi Aktif, Riwayat, dan Terblokir dengan filter simbol.
+    - Kartu tiket interaktif (`TicketCard.tsx`) dengan live countdown timer, tabel perbandingan level harga, kalkulator lot kustom, tombol salin ringkas & lengkap, serta dialog kalibrasi broker, eksekusi nyata, dan tutup posisi.
+  - **Halaman Paper Trading (`PaperPage.tsx`):**
+    - Kartu KPI performa (`PaperAccountCard.tsx`): Equity, PnL Harian, Winrate %, Posisi Terbuka, dan indikator batas kerugian harian.
+    - Tabel posisi paper lengkap (`PaperTradesTable.tsx`) dengan filter tab (Semua, Terbuka, Riwayat, Simulasi Virtual), badge alasan exit (TP1, TP2, BE, SL, Time Stop, Opposite Signal, Manual), dan modal penutupan manual.
+  - **Integrasi Analisa & Cockpit:**
+    - `AnalisaPage.tsx`: integrasi kartu tiket aktif langsung pada kolom keputusan.
+    - `DashboardPage.tsx`: seksi khusus tiket sinyal aktif siap eksekusi di cockpit utama.
+    - `Shell.tsx`: integrasi tab menu navigasi `Ticket` dan `Paper`.
+- **Pengujian & Verifikasi Kualitas:**
+  - 107 pengujian unit backend (`test_ticket.py`, `test_paper_trader.py`, `test_ticket_and_paper_api.py`, dll.) lulus 100%.
+  - 10 pengujian vitest frontend lulus 100%.
+  - Linter Ruff dan Mypy Strict lulus tanpa error pada seluruh source code.
+  - Build produksi Vite frontend sukses (489 kB bundle, 0 error).
+
 ## [Fase 4: Skor, Macro Filter, Strategi B, Panel Analisa] - 2026-10-15
 
 ### Ditambahkan

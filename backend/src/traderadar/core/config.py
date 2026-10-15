@@ -360,3 +360,8 @@ def get_settings() -> Settings:
     env = EnvSettings()
     app = load_app_settings()
     return Settings(env=env, app=app)
+
+
+def get_app_settings() -> AppSettings:
+    """Convenience getter for AppSettings component."""
+    return get_settings().app
