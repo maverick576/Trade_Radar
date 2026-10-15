@@ -1002,10 +1002,435 @@
           }
         }
       }
+    },
+    "/api/analysis/{symbol}": {
+      "get": {
+        "tags": [
+          "Analysis & Signals"
+        ],
+        "summary": "Get Latest Analysis Endpoint",
+        "description": "Get the latest confluence analysis for a symbol.\n\nIf not cached or if preview_live is requested, computes on-the-fly.",
+        "operationId": "get_latest_analysis_endpoint_api_analysis__symbol__get",
+        "parameters": [
+          {
+            "name": "symbol",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Symbol"
+            }
+          },
+          {
+            "name": "tf",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Timeframe e.g. M15",
+              "default": "M15",
+              "title": "Tf"
+            },
+            "description": "Timeframe e.g. M15"
+          },
+          {
+            "name": "preview_live",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Evaluate on running bar if True",
+              "default": false,
+              "title": "Preview Live"
+            },
+            "description": "Evaluate on running bar if True"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalysisResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/analysis/{symbol}/history": {
+      "get": {
+        "tags": [
+          "Analysis & Signals"
+        ],
+        "summary": "Get Score History Endpoint",
+        "description": "Retrieve historical score time series for the 48-hour score history area chart.",
+        "operationId": "get_score_history_endpoint_api_analysis__symbol__history_get",
+        "parameters": [
+          {
+            "name": "symbol",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Symbol"
+            }
+          },
+          {
+            "name": "tf",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Timeframe e.g. M15",
+              "default": "M15",
+              "title": "Tf"
+            },
+            "description": "Timeframe e.g. M15"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 300,
+              "minimum": 1,
+              "description": "Max historical scores to return",
+              "default": 48,
+              "title": "Limit"
+            },
+            "description": "Max historical scores to return"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScoreHistoryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/signals": {
+      "get": {
+        "tags": [
+          "Analysis & Signals"
+        ],
+        "summary": "Get Signals Endpoint",
+        "description": "Retrieve trading signals including blocked and watch signals.",
+        "operationId": "get_signals_endpoint_api_signals_get",
+        "parameters": [
+          {
+            "name": "symbol",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by symbol",
+              "title": "Symbol"
+            },
+            "description": "Filter by symbol"
+          },
+          {
+            "name": "strategy",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by strategy",
+              "title": "Strategy"
+            },
+            "description": "Filter by strategy"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by status e.g. ticketed, blocked, watch",
+              "title": "Status"
+            },
+            "description": "Filter by status e.g. ticketed, blocked, watch"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "description": "Max signals to return",
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "Max signals to return"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignalsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "AnalysisResponse": {
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "title": "Symbol"
+          },
+          "tf": {
+            "type": "string",
+            "title": "Tf"
+          },
+          "bar_time": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Bar Time"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "score": {
+            "type": "number",
+            "title": "Score"
+          },
+          "verdict": {
+            "type": "string",
+            "title": "Verdict"
+          },
+          "counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Counts"
+          },
+          "indicators": {
+            "items": {
+              "$ref": "#/components/schemas/IndicatorResult"
+            },
+            "type": "array",
+            "title": "Indicators"
+          },
+          "category_votes": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Category Votes"
+          },
+          "htf": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Htf"
+          },
+          "macro": {
+            "$ref": "#/components/schemas/MacroFilterResult"
+          },
+          "strategy_b": {
+            "$ref": "#/components/schemas/StrategyBResult"
+          },
+          "weights_version": {
+            "type": "string",
+            "title": "Weights Version"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "symbol",
+          "tf",
+          "bar_time",
+          "source",
+          "score",
+          "verdict",
+          "counts",
+          "indicators",
+          "category_votes",
+          "htf",
+          "macro",
+          "strategy_b",
+          "weights_version",
+          "created_at"
+        ],
+        "title": "AnalysisResponse",
+        "description": "Full confluence analysis response schema."
+      },
       "CandleItem": {
         "properties": {
           "symbol": {
@@ -1364,6 +1789,63 @@
         "title": "LoginResponse",
         "description": "Successful login response."
       },
+      "MacroCheck": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "passed": {
+            "type": "boolean",
+            "title": "Passed"
+          },
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "passed",
+          "detail"
+        ],
+        "title": "MacroCheck",
+        "description": "Result of an individual macro filter rule."
+      },
+      "MacroFilterResult": {
+        "properties": {
+          "passed": {
+            "type": "boolean",
+            "title": "Passed"
+          },
+          "checks": {
+            "items": {
+              "$ref": "#/components/schemas/MacroCheck"
+            },
+            "type": "array",
+            "title": "Checks"
+          },
+          "blocked_by": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Blocked By"
+          }
+        },
+        "type": "object",
+        "required": [
+          "passed"
+        ],
+        "title": "MacroFilterResult",
+        "description": "Consolidated result of all macro filter checks."
+      },
       "MessageResponse": {
         "properties": {
           "message": {
@@ -1391,6 +1873,233 @@
         ],
         "title": "MessageResponse",
         "description": "Standard generic message response."
+      },
+      "ScoreHistoryItem": {
+        "properties": {
+          "bar_time": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Bar Time"
+          },
+          "score": {
+            "type": "number",
+            "title": "Score"
+          },
+          "verdict": {
+            "type": "string",
+            "title": "Verdict"
+          }
+        },
+        "type": "object",
+        "required": [
+          "bar_time",
+          "score",
+          "verdict"
+        ],
+        "title": "ScoreHistoryItem",
+        "description": "Historical score data point for time-series chart."
+      },
+      "ScoreHistoryResponse": {
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "title": "Symbol"
+          },
+          "tf": {
+            "type": "string",
+            "title": "Tf"
+          },
+          "history": {
+            "items": {
+              "$ref": "#/components/schemas/ScoreHistoryItem"
+            },
+            "type": "array",
+            "title": "History"
+          }
+        },
+        "type": "object",
+        "required": [
+          "symbol",
+          "tf",
+          "history"
+        ],
+        "title": "ScoreHistoryResponse",
+        "description": "List of historical scores."
+      },
+      "SignalItem": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "analysis_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Analysis Id"
+          },
+          "strategy": {
+            "type": "string",
+            "title": "Strategy"
+          },
+          "symbol": {
+            "type": "string",
+            "title": "Symbol"
+          },
+          "tf": {
+            "type": "string",
+            "title": "Tf"
+          },
+          "side": {
+            "type": "string",
+            "title": "Side"
+          },
+          "verdict": {
+            "type": "string",
+            "title": "Verdict"
+          },
+          "bar_time": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Bar Time"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "blocked_by": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Blocked By"
+          },
+          "confirmed_by_b": {
+            "type": "boolean",
+            "title": "Confirmed By B",
+            "default": false
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "strategy",
+          "symbol",
+          "tf",
+          "side",
+          "verdict",
+          "bar_time",
+          "status",
+          "created_at"
+        ],
+        "title": "SignalItem",
+        "description": "Trading signal item schema."
+      },
+      "SignalsResponse": {
+        "properties": {
+          "signals": {
+            "items": {
+              "$ref": "#/components/schemas/SignalItem"
+            },
+            "type": "array",
+            "title": "Signals"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "signals",
+          "total"
+        ],
+        "title": "SignalsResponse",
+        "description": "Paginated signals list."
+      },
+      "StrategyBResult": {
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": [
+              "LONG",
+              "SHORT",
+              "NEUTRAL"
+            ],
+            "title": "State"
+          },
+          "entry": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entry"
+          },
+          "sl": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sl"
+          },
+          "tp": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tp"
+          },
+          "rr": {
+            "type": "number",
+            "title": "Rr",
+            "default": 1.0
+          },
+          "confirmed": {
+            "type": "boolean",
+            "title": "Confirmed",
+            "default": false
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "state"
+        ],
+        "title": "StrategyBResult",
+        "description": "Output evaluation of Triple-EMA Strategy B."
       },
       "SymbolItem": {
         "properties": {

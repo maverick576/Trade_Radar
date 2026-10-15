@@ -67,9 +67,7 @@ class LightGbmIndicator:
         elif p_down >= self.p_threshold and (p_down - p_up) >= self.p_margin:
             state = "BEAR"
             strength = float(np.clip((p_down - 0.5) / 0.25, 0.0, 1.0))
-            reason = (
-                f"Prediksi model turun (P(down)={p_down:.1%}, delta={p_down - p_up:+.1%})."
-            )
+            reason = f"Prediksi model turun (P(down)={p_down:.1%}, delta={p_down - p_up:+.1%})."
         else:
             state = "NEUTRAL"
             strength = 0.0

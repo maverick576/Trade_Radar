@@ -304,10 +304,116 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/analysis/{symbol}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Latest Analysis Endpoint
+         * @description Get the latest confluence analysis for a symbol.
+         *
+         *     If not cached or if preview_live is requested, computes on-the-fly.
+         */
+        get: operations["get_latest_analysis_endpoint_api_analysis__symbol__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/analysis/{symbol}/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Score History Endpoint
+         * @description Retrieve historical score time series for the 48-hour score history area chart.
+         */
+        get: operations["get_score_history_endpoint_api_analysis__symbol__history_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/signals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Signals Endpoint
+         * @description Retrieve trading signals including blocked and watch signals.
+         */
+        get: operations["get_signals_endpoint_api_signals_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * AnalysisResponse
+         * @description Full confluence analysis response schema.
+         */
+        AnalysisResponse: {
+            /** Symbol */
+            symbol: string;
+            /** Tf */
+            tf: string;
+            /**
+             * Bar Time
+             * Format: date-time
+             */
+            bar_time: string;
+            /** Source */
+            source: string;
+            /** Score */
+            score: number;
+            /** Verdict */
+            verdict: string;
+            /** Counts */
+            counts: {
+                [key: string]: number;
+            };
+            /** Indicators */
+            indicators: components["schemas"]["IndicatorResult"][];
+            /** Category Votes */
+            category_votes: {
+                [key: string]: string;
+            };
+            /** Htf */
+            htf: {
+                [key: string]: string;
+            };
+            macro: components["schemas"]["MacroFilterResult"];
+            strategy_b: components["schemas"]["StrategyBResult"];
+            /** Weights Version */
+            weights_version: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
         /**
          * CandleItem
          * @description Candlestick bar representation.
@@ -484,6 +590,32 @@ export interface components {
             csrf_token?: string | null;
         };
         /**
+         * MacroCheck
+         * @description Result of an individual macro filter rule.
+         */
+        MacroCheck: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Passed */
+            passed: boolean;
+            /** Detail */
+            detail: string;
+        };
+        /**
+         * MacroFilterResult
+         * @description Consolidated result of all macro filter checks.
+         */
+        MacroFilterResult: {
+            /** Passed */
+            passed: boolean;
+            /** Checks */
+            checks?: components["schemas"]["MacroCheck"][];
+            /** Blocked By */
+            blocked_by?: string[];
+        };
+        /**
          * MessageResponse
          * @description Standard generic message response.
          */
@@ -494,6 +626,114 @@ export interface components {
             detail?: {
                 [key: string]: string;
             } | null;
+        };
+        /**
+         * ScoreHistoryItem
+         * @description Historical score data point for time-series chart.
+         */
+        ScoreHistoryItem: {
+            /**
+             * Bar Time
+             * Format: date-time
+             */
+            bar_time: string;
+            /** Score */
+            score: number;
+            /** Verdict */
+            verdict: string;
+        };
+        /**
+         * ScoreHistoryResponse
+         * @description List of historical scores.
+         */
+        ScoreHistoryResponse: {
+            /** Symbol */
+            symbol: string;
+            /** Tf */
+            tf: string;
+            /** History */
+            history: components["schemas"]["ScoreHistoryItem"][];
+        };
+        /**
+         * SignalItem
+         * @description Trading signal item schema.
+         */
+        SignalItem: {
+            /** Id */
+            id: number;
+            /** Analysis Id */
+            analysis_id?: number | null;
+            /** Strategy */
+            strategy: string;
+            /** Symbol */
+            symbol: string;
+            /** Tf */
+            tf: string;
+            /** Side */
+            side: string;
+            /** Verdict */
+            verdict: string;
+            /**
+             * Bar Time
+             * Format: date-time
+             */
+            bar_time: string;
+            /** Status */
+            status: string;
+            /** Blocked By */
+            blocked_by?: string[] | null;
+            /**
+             * Confirmed By B
+             * @default false
+             */
+            confirmed_by_b: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /**
+         * SignalsResponse
+         * @description Paginated signals list.
+         */
+        SignalsResponse: {
+            /** Signals */
+            signals: components["schemas"]["SignalItem"][];
+            /** Total */
+            total: number;
+        };
+        /**
+         * StrategyBResult
+         * @description Output evaluation of Triple-EMA Strategy B.
+         */
+        StrategyBResult: {
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "LONG" | "SHORT" | "NEUTRAL";
+            /** Entry */
+            entry?: number | null;
+            /** Sl */
+            sl?: number | null;
+            /** Tp */
+            tp?: number | null;
+            /**
+             * Rr
+             * @default 1
+             */
+            rr: number;
+            /**
+             * Confirmed
+             * @default false
+             */
+            confirmed: boolean;
+            /**
+             * Reason
+             * @default
+             */
+            reason: string;
         };
         /**
          * SymbolItem
@@ -1066,6 +1306,128 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["IndicatorsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_latest_analysis_endpoint_api_analysis__symbol__get: {
+        parameters: {
+            query?: {
+                /** @description Timeframe e.g. M15 */
+                tf?: string;
+                /** @description Evaluate on running bar if True */
+                preview_live?: boolean;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                symbol: string;
+            };
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnalysisResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_score_history_endpoint_api_analysis__symbol__history_get: {
+        parameters: {
+            query?: {
+                /** @description Timeframe e.g. M15 */
+                tf?: string;
+                /** @description Max historical scores to return */
+                limit?: number;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                symbol: string;
+            };
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScoreHistoryResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_signals_endpoint_api_signals_get: {
+        parameters: {
+            query?: {
+                /** @description Filter by symbol */
+                symbol?: string | null;
+                /** @description Filter by strategy */
+                strategy?: string | null;
+                /** @description Filter by status e.g. ticketed, blocked, watch */
+                status?: string | null;
+                /** @description Max signals to return */
+                limit?: number;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SignalsResponse"];
                 };
             };
             /** @description Validation Error */

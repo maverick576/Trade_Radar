@@ -58,3 +58,10 @@ export type SymbolsResponse =
   paths["/api/symbols"]["get"]["responses"][200]["content"]["application/json"];
 export type CandleItem =
   paths["/api/candles"]["get"]["responses"][200]["content"]["application/json"][number];
+export type AnalysisResponse =
+  paths["/api/analysis/{symbol}"]["get"]["responses"][200]["content"]["application/json"];
+export type ScoreHistoryResponse =
+  paths["/api/analysis/{symbol}/history"]["get"]["responses"][200]["content"]["application/json"];
+export type SignalsResponse =
+  paths["/api/signals"]["get"]["responses"][200]["content"]["application/json"];
+export type SignalItem = SignalsResponse["signals"][number];

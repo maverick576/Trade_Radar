@@ -112,3 +112,28 @@ Dokumen ini mencatat keputusan teknis, pinning versi, dan verifikasi asumsi ekst
      - Seluruh perhitungan dirancang berbasis vektorisasi NumPy/Pandas.
      - Hasil benchmark evaluasi lengkap 10 indikator pada 1.000 candle: **~2.1 ms per simbol/TF** (lebih dari 100x lebih cepat daripada batas SLA < 300 ms).
 
+---
+
+## ADR-006: Skema Skor Konfluensi, Gerbang Macro Filter M1–M8, Strategi B, dan Layout Terminal Analisa (Fase 4)
+- **Tanggal:** 15 Oktober 2026
+- **Status:** Diterima
+- **Keputusan Teknis & Arsitektur:**
+  1. **Formulasi Normalisasi Skor Dinamis:**
+     - Formula: $score = 100 \cdot \sum(w_i \cdot s_i \cdot strength_i) / \sum(w_i)$ di mana $s_i \in \{+1, -1, 0\}$.
+     - Indikator dengan status `NA` dikeluarkan dari pembilang maupun penyebut secara dinamis.
+     - Ambang batas bobot: Bila total bobot tersedia $< 50\%$, sinyal dibatasi maksimal ke status pantau (`LONG`/`SHORT`) dan dilarang menghasilkan verdict `STRONG`.
+  2. **Independensi Evaluasi 8 Gerbang Macro Filter (M1–M8):**
+     - M1 (HTF): Memerlukan konfirmasi ganda sebelum memblokir sinyal — sinyal hanya dibatalkan jika KEDUA-DUANYA (H4 close vs EMA200 dan D1 Supertrend) berlawanan dengan arah sinyal.
+     - M4 (Sesi Pasar TradFi Gold): Mengintegrasikan kalender pasar emas global dengan penyesuaian DST New York dan jendela rollover 20:45–01:15 UTC. Untuk instrumen Crypto (BTC, ETH, SOL), M4 lolos otomatis (24/7).
+     - Seluruh sinyal yang dibatalkan oleh filter makro tetap disimpan ke tabel `signals` dengan status `blocked` dan array `blocked_by` untuk keperluan analisis akurasi dan journal audit.
+  3. **Strategi B (Triple-EMA Ruang Scalper):**
+     - Menggunakan susunan EMA cepat 9 (close), EMA tengah 21 (applied to Open), dan EMA lambat 50 (close).
+     - Menghitung level exit otomatis (SL pada swing 10-bar atau 1.2×ATR, diapit minimal 0.8×ATR, dan TP 1R).
+     - Dievaluasi independen secara paralel dengan Strategi A untuk perbandingan winrate.
+  4. **Penyimpanan Idempotensial & Event Bus PubSub:**
+     - Tabel `analyses` menggunakan unique constraint pada `(symbol, tf, bar_time)`.
+     - Background service `engine` mengonsumsi stream `candles.closed` dan mempublikasikan event `analysis` serta `signal` ke Redis PubSub `ui.events` sehingga UI ter-update real-time dalam $\le 2$ detik.
+  5. **Arsitektur Layout UI Terminal 3-Kolom:**
+     - Desain modular: Chart & Mini Score History 48-jam (kiri), ScoreGauge & 10 Kartu Indikator per Kategori (tengah), Macro Checklist M1-M8 & Strategy B & Teaser Ticket/AI (kanan).
+
+

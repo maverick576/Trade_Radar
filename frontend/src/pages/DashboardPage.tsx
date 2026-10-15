@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   TrendingUp,
   TrendingDown,
@@ -7,9 +7,12 @@ import {
   Clock,
   ArrowRight,
   ShieldCheck,
+  ShieldAlert,
   Zap,
 } from "lucide-react";
 import { useMarket, type SymbolData } from "../context/MarketContext";
+import { apiClient, type AnalysisResponse } from "../api/client";
+import { ScoreGauge } from "../components/ui/ScoreGauge";
 
 interface DashboardPageProps {
   onSelectSymbol: (symbol: string) => void;
@@ -21,6 +24,30 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   onNavigateToAnalisa,
 }) => {
   const { symbols, ticks, wsConnected, goldSourceAlert } = useMarket();
+  const [analyses, setAnalyses] = useState<Record<string, AnalysisResponse>>({});
+
+  useEffect(() => {
+    // Fetch latest analysis for each watchlist symbol
+    symbols.forEach(async (sym) => {
+      try {
+        const querySym = sym.symbol === "XAUUSDT" ? "XAUUSD" : sym.symbol;
+        const res = await apiClient.GET("/api/analysis/{symbol}", {
+          params: {
+            path: { symbol: querySym },
+            query: { tf: "M15" },
+          },
+        });
+        if (res.data) {
+          setAnalyses((prev) => ({
+            ...prev,
+            [sym.symbol]: res.data as AnalysisResponse,
+          }));
+        }
+      } catch {
+        // Graceful fallback if analysis not yet available
+      }
+    });
+  }, [symbols]);
 
   const handleCardClick = (symbol: string) => {
     onSelectSymbol(symbol);
@@ -46,7 +73,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             </span>
           </div>
           <p className="text-sm text-muted mt-1">
-            Data harga live terhubung langsung ke WebSocket Binance & TradFi Gold.
+            Data harga live dan konfluensi 10 indikator terhubung langsung ke Binance & TradFi Gold.
           </p>
         </div>
 
@@ -60,12 +87,13 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         )}
       </div>
 
-      {/* Live Market Price Cards Grid */}
+      {/* Live Market Price & Confluence Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {symbols.map((sym: SymbolData) => {
           const liveTick = ticks[sym.symbol] || (sym.asset === "gold" ? ticks["XAUUSDT"] : null);
           const displayPrice = liveTick?.price ?? sym.price;
           const isUp = (sym.change_24h ?? 0) >= 0;
+          const analysis = analyses[sym.symbol];
 
           return (
             <div
@@ -126,8 +154,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               </div>
 
               {/* Live Price Display */}
-              <div className="my-4">
-                <div className="text-3xl font-extrabold font-mono tracking-tight text-fg">
+              <div className="my-3">
+                <div className="text-2xl font-extrabold font-mono tracking-tight text-fg">
                   {displayPrice !== null && displayPrice !== undefined ? (
                     displayPrice.toLocaleString(undefined, {
                       minimumFractionDigits: 2,
@@ -137,11 +165,96 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                     <span className="text-muted text-xl animate-pulse">Memuat...</span>
                   )}
                 </div>
-                <div className="flex items-center justify-between text-xs font-mono text-muted mt-2">
-                  <span>H: {sym.high_24h ? sym.high_24h.toFixed(2) : "—"}</span>
-                  <span>L: {sym.low_24h ? sym.low_24h.toFixed(2) : "—"}</span>
-                </div>
               </div>
+
+              {/* Confluence Score & Verdict Section */}
+              {analysis ? (
+                <div className="my-2 p-2.5 rounded-xl bg-surface-2/40 border border-border space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] uppercase font-mono font-bold text-muted">
+                      Skor M15
+                    </span>
+                    <ScoreGauge
+                      score={analysis.score}
+                      verdict={analysis.verdict}
+                      compact
+                    />
+                  </div>
+
+                  {/* Indicators Count Breakdown */}
+                  <div className="flex items-center justify-between text-[11px] font-mono border-t border-border/50 pt-1.5">
+                    <span className="text-muted">Konfluensi:</span>
+                    <div className="flex items-center gap-1.5 font-bold">
+                      <span className="text-emerald-400">▲ {analysis.counts.BULL}</span>
+                      <span className="text-muted">• {analysis.counts.NEUTRAL}</span>
+                      <span className="text-rose-400">▼ {analysis.counts.BEAR}</span>
+                    </div>
+                  </div>
+
+                  {/* Macro Status & HTF Biases */}
+                  <div className="flex items-center justify-between text-[10px] font-mono text-muted pt-1 border-t border-border/40">
+                    <span
+                      className={`inline-flex items-center gap-1 font-bold ${
+                        analysis.macro.passed ? "text-emerald-400" : "text-amber-500"
+                      }`}
+                    >
+                      {analysis.macro.passed ? (
+                        <>
+                          <ShieldCheck className="w-3 h-3" /> Macro ✓
+                        </>
+                      ) : (
+                        <>
+                          <ShieldAlert className="w-3 h-3" /> Macro ⚠
+                        </>
+                      )}
+                    </span>
+
+                    {/* HTF Chips */}
+                    <div className="flex items-center gap-1 text-[10px]">
+                      <span>H1:</span>
+                      <strong
+                        className={
+                          analysis.htf.H1 === "BULL"
+                            ? "text-emerald-400"
+                            : analysis.htf.H1 === "BEAR"
+                            ? "text-rose-400"
+                            : "text-muted"
+                        }
+                      >
+                        {analysis.htf.H1 === "BULL" ? "▲" : analysis.htf.H1 === "BEAR" ? "▼" : "•"}
+                      </strong>
+                      <span>H4:</span>
+                      <strong
+                        className={
+                          analysis.htf.H4 === "BULL"
+                            ? "text-emerald-400"
+                            : analysis.htf.H4 === "BEAR"
+                            ? "text-rose-400"
+                            : "text-muted"
+                        }
+                      >
+                        {analysis.htf.H4 === "BULL" ? "▲" : analysis.htf.H4 === "BEAR" ? "▼" : "•"}
+                      </strong>
+                      <span>D1:</span>
+                      <strong
+                        className={
+                          analysis.htf.D1 === "BULL"
+                            ? "text-emerald-400"
+                            : analysis.htf.D1 === "BEAR"
+                            ? "text-rose-400"
+                            : "text-muted"
+                        }
+                      >
+                        {analysis.htf.D1 === "BULL" ? "▲" : analysis.htf.D1 === "BEAR" ? "▼" : "•"}
+                      </strong>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="my-2 p-2.5 rounded-xl bg-surface-2/20 border border-border text-[11px] text-muted text-center">
+                  Menganalisis konfluensi...
+                </div>
+              )}
 
               {/* Card Footer: Status & Action */}
               <div className="pt-3 border-t border-border flex items-center justify-between text-xs">

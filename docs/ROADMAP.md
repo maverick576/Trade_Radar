@@ -37,9 +37,9 @@ Estimasi: ±14–18 sesi agent.
 - **Selesai bila:** coverage `engine/indicators` ≥ 85%, nilai cocok ≤ 0,1%, durasi analisis < 300 ms/simbol/TF.
 
 ## Fase 4 — Skor, macro filter, Strategi B, panel Analisa
-- [ ] `scoring`, `macro_filter` (M1–M8), `strategies/konfluensi10`, `strategies/triple_ema`, konsumsi `candles.closed`, preview live.
-- [ ] Simpan `analyses` & `signals` (termasuk terblokir).
-- [ ] UI Analisa lengkap (10 kartu indikator, gauge, macro checklist, Strategi B, marker sinyal, riwayat skor); kartu watchlist Dashboard lengkap.
+- [x] `scoring`, `macro_filter` (M1–M8), `strategies/konfluensi10`, `strategies/triple_ema`, konsumsi `candles.closed`, preview live.
+- [x] Simpan `analyses` & `signals` (termasuk terblokir).
+- [x] UI Analisa lengkap (10 kartu indikator, gauge, macro checklist, Strategi B, marker sinyal, riwayat skor); kartu watchlist Dashboard lengkap.
 - **Selesai bila:** setiap close M15, UI ter-update ≤ 2 dtk; test scoring/macro/sesi lulus.
 
 ## Fase 5 — Trade Ticket, kalibrasi broker, paper trading

@@ -3,6 +3,61 @@
 Semua perubahan penting pada TradeRadar didokumentasikan di file ini.
 Format mengikuti panduan [Keep a Changelog](https://keepachangelog.com/id/1.0.0/).
 
+## [Fase 4: Skor, Macro Filter, Strategi B, Panel Analisa] - 2026-10-15
+
+### Ditambahkan
+- **Engine Skor Konfluensi & Voting Kategori (`traderadar.engine.scoring`):**
+  - Implementasi perhitungan skor konfluensi ternormalisasi (-100 s/d +100) sesuai formula `SIGNAL_ENGINE.md` §4:
+    - Normalisasi bobot dinamis: indikator `NA` dibuang dari pembilang dan penyebut.
+    - Suara kategori (Trend, Momentum, Order Flow, Derivatif, Mikrostruktur, ML, Sentimen) dihitung bertanda (`w * s * strength`).
+    - Evaluasi konfirmasi H1 berbasis mayoritas dari EMA Ribbon H1, Supertrend H1, dan posisi RSI H1 terhadap level 50.
+    - Penentuan verdict deterministik (`STRONG_LONG`, `LONG`, `NEUTRAL`, `SHORT`, `STRONG_SHORT`):
+      - `STRONG_LONG`: Skor ≥ 55, ≥ 3 kategori BULL, kategori Trend = BULL, konfirmasi H1 bukan BEAR, Macro Filter PASS, dan bobot tersedia ≥ 50%.
+      - Batas bobot: bila total bobot tersedia < 50%, verdict dibatasi ke pantau (`LONG`/`SHORT`) dan tidak boleh `STRONG`.
+- **Macro Filter Gerbang M1–M8 (`traderadar.engine.macro_filter`):**
+  - Evaluasi 8 gerbang makro independen yang mengembalikan detail alasan dalam Bahasa Indonesia:
+    - **M1 (Tren Besar HTF):** H4 close vs EMA200 H4 dan Supertrend D1; gagal hanya bila KEDUA-DUANYA berlawanan dengan arah sinyal.
+    - **M2 (Berita High-Impact):** Jendela blackout USD High-impact (±30 menit).
+    - **M3 (Volatilitas ATR):** Evaluasi ATR14 M15 terhadap persentil 30 hari (P10 s/d P95) untuk mendeteksi pasar mati (< P10) atau volatilitas ekstrem (> P95).
+    - **M4 (Sesi Pasar Gold):** Kalender sesi TradFi emas (`core.time` dengan penyesuaian DST AS) mendeteksi pasar tutup akhir pekan dan jendela rollover harian spread broker (20:45–01:15 UTC).
+    - **M5 (Likuiditas Spread):** Spread best bid/ask orderbook vs 2× median 24 jam.
+    - **M6 (Kesegaran Data):** Keterlambatan candle > 2× TF, status WebSocket putus, atau warmup sumber fallback Gold < 60 menit.
+    - **M7 (Funding Ekstrem):** |funding rate| > 0.1% per 8 jam.
+    - **M8 (Batas Risiko Paper):** Daily loss limit paper trade (3%) dan pembatasan posisi aktif per simbol.
+- **Strategi B: Triple-EMA (`traderadar.engine.strategies.triple_ema`):**
+  - EMA cepat 9 (close), EMA tengah 21 (applied to Open), EMA lambat 50 (close).
+  - Crossover M15 dengan konfirmasi slope 5-bar EMA50 dan susunan EMA H1.
+  - Perhitungan level SL dinamis (swing low/high 10 bar vs 1.2×ATR, diapit minimal 0.8×ATR) dan target TP 1R.
+  - Evaluasi gerbang Macro Filter M2–M6.
+- **Pipeline Koordinasi Strategi A & B (`traderadar.engine.strategies.konfluensi10`):**
+  - Eksekusi terpadu 10 indikator M15, multi-timeframe bias (H1, H4, D1), Macro Filter M1-M8, serta mekanisme cooldown 4 bar untuk sinyal searah pada simbol yang sama.
+- **Database & Model Penyimpanan (`analyses` & `signals`):**
+  - Migrasi Alembic `003_create_analyses_and_signals_tables.py` untuk tabel `analyses` (dengan constraint unik per `symbol, tf, bar_time`) dan `signals` (termasuk sinyal terblokir dengan array `blocked_by`).
+  - SQLAlchemy models `AnalysisRecord` dan `SignalRecord` di `traderadar.core.models`.
+  - Repository `traderadar.services.analysis_store` dengan fungsi upsert idempotensial dan kueri riwayat.
+- **Background Service Engine (`traderadar.services.engine`):**
+  - Konsumsi event Redis Stream `candles.closed` dalam consumer group `engine`.
+  - Publikasi real-time ke PubSub `ui.events` (event `analysis` dan `signal`) untuk pembaruan instan di WebSocket clients (< 2 detik).
+  - Emisi sinyal terkonfirmasi ke stream Redis `signals`.
+- **REST API Endpoints:**
+  - `GET /api/analysis/{symbol}?tf=M15&preview_live=false`: menyajikan analisis lengkap closed bar atau preview bar berjalan.
+  - `GET /api/analysis/{symbol}/history?tf=M15&limit=48`: data timeseries riwayat skor 48 jam.
+  - `GET /api/signals?symbol=&strategy=&status=&limit=50`: daftar sinyal terverifikasi maupun terblokir.
+- **Frontend Professional UI (`frontend/`):**
+  - **Analisa Page (`AnalisaPage.tsx`):**
+    - Layout 3-kolom trading terminal modern:
+      1. Kolom Chart: candlestick + volume, overlay toggles, marker sinyal historis (▲/▼ berwarna), pane RSI & CVD, dan mini area chart riwayat skor 48 jam (`ScoreHistoryChart.tsx`).
+      2. Kolom Indikator: ringkasan konfluensi, widget `ScoreGauge.tsx` dengan indikator linear visual dan chip hitungan `▲ • ▼`, serta 10 kartu indikator dikelompokkan per kategori.
+      3. Kolom Keputusan: checklist `MacroChecklist.tsx` (M1–M8 dengan badge lolos/gagal), widget bias HTF (H1, H4, D1), panel `StrategyBPanel.tsx`, teaser Trade Ticket, dan AI Brief.
+  - **Dashboard Page (`DashboardPage.tsx`):**
+    - Kartu watchlist lengkap diperkaya dengan gauge skor M15, ringkasan suara indikator, badge status macro filter (`✓ Macro` / `⚠ Terblokir`), dan bias HTF multi-timeframe.
+  - Regenerasi TypeScript types via OpenAPI `npm run gen:api` (zero `any`).
+- **Pengujian & Verifikasi Kualitas:**
+  - 91 pengujian unit backend lulus 100% (scoring, macro filter M1-M8, Strategy B, pipeline konfluensi, API endpoints).
+  - Frontend Vitest (ScoreGauge, MacroChecklist, App Shell) lulus 100%.
+  - Mypy Strict dan Ruff linter lulus tanpa error.
+  - Production build Vite lulus tanpa error (3.02s).
+
 ## [Fase 3: 10 Indikator] - 2026-10-15
 
 ### Ditambahkan

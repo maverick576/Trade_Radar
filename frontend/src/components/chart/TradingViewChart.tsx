@@ -75,6 +75,14 @@ export interface ChartPanes {
   cvd?: CvdPoint[];
 }
 
+export interface SignalChartMarker {
+  time: UTCTimestamp;
+  position: "aboveBar" | "belowBar";
+  color: string;
+  shape: "arrowUp" | "arrowDown";
+  text: string;
+}
+
 interface TradingViewChartProps {
   candles: ChartCandle[];
   liveCandle?: ChartCandle | null;
@@ -82,6 +90,7 @@ interface TradingViewChartProps {
   tf: string;
   overlays?: ChartOverlays;
   panes?: ChartPanes;
+  markers?: SignalChartMarker[];
   activeOverlays?: {
     vwap: boolean;
     ema_ribbon: boolean;
@@ -103,6 +112,7 @@ export const TradingViewChart: React.FC<TradingViewChartProps> = ({
   tf,
   overlays,
   panes,
+  markers,
   activeOverlays = { vwap: true, ema_ribbon: false, supertrend: true, bollinger: false },
   activePanes = { rsi: true, cvd: false },
   onToggleOverlay,
@@ -522,6 +532,16 @@ export const TradingViewChart: React.FC<TradingViewChartProps> = ({
       change: ((liveCandle.close - liveCandle.open) / liveCandle.open) * 100,
     });
   }, [liveCandle]);
+
+  // Set markers for historical signals (▲/▼ with tooltips)
+  useEffect(() => {
+    if (!candleSeriesRef.current) return;
+    if (markers && markers.length > 0) {
+      candleSeriesRef.current.setMarkers(markers);
+    } else {
+      candleSeriesRef.current.setMarkers([]);
+    }
+  }, [markers, candles]);
 
   // Manage VWAP Overlays
   useEffect(() => {

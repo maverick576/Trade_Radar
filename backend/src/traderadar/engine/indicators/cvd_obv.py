@@ -66,9 +66,7 @@ def calculate_cvd_obv_series(
 
     # Standard deviation over norm_window for normalization
     cvd_std = (
-        continuous_cum.rolling(window=norm_window, min_periods=slope_window)
-        .std(ddof=0)
-        .fillna(1.0)
+        continuous_cum.rolling(window=norm_window, min_periods=slope_window).std(ddof=0).fillna(1.0)
     )
     price_std = (
         df["close"].rolling(window=norm_window, min_periods=slope_window).std(ddof=0).fillna(1.0)

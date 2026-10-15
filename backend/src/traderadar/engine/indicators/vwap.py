@@ -150,9 +150,7 @@ class VwapIndicator:
         if is_overextended:
             strength = base_strength * 0.5
             if state == "BULL":
-                reason = (
-                    f"Harga terlalu jauh di atas VWAP (z={last_z:+.2f}), rawan mean-reversion."
-                )
+                reason = f"Harga terlalu jauh di atas VWAP (z={last_z:+.2f}), rawan mean-reversion."
             elif state == "BEAR":
                 reason = (
                     f"Harga terlalu jauh di bawah VWAP (z={last_z:+.2f}), rawan mean-reversion."

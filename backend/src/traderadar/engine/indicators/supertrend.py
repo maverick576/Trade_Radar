@@ -157,16 +157,12 @@ class SupertrendIndicator:
 
         if state == "BULL":
             if is_close_to_line:
-                reason = (
-                    f"Supertrend bull {last_st:.2f}, harga dekat ({distance_atr:.1f}x ATR)."
-                )
+                reason = f"Supertrend bull {last_st:.2f}, harga dekat ({distance_atr:.1f}x ATR)."
             else:
                 reason = f"Supertrend bullish di {last_st:.2f} ({flip_note})."
         else:
             if is_close_to_line:
-                reason = (
-                    f"Supertrend bear {last_st:.2f}, harga dekat ({distance_atr:.1f}x ATR)."
-                )
+                reason = f"Supertrend bear {last_st:.2f}, harga dekat ({distance_atr:.1f}x ATR)."
             else:
                 reason = f"Supertrend bearish di {last_st:.2f} ({flip_note})."
 

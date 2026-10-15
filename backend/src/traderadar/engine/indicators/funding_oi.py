@@ -95,9 +95,7 @@ class FundingOiIndicator:
             strength = base_strength
         elif delta_price_pct < 0 and delta_oi_pct < -self.oi_change_pct:
             state = "NEUTRAL"
-            reason = (
-                f"Likuidasi long (ΔOI {delta_oi_pct:+.1f}%, posisi berkurang saat turun)."
-            )
+            reason = f"Likuidasi long (ΔOI {delta_oi_pct:+.1f}%, posisi berkurang saat turun)."
             strength = 0.0
         else:
             state = "NEUTRAL"
@@ -109,9 +107,7 @@ class FundingOiIndicator:
         if funding > self.funding_crowded:
             if state == "BULL":
                 state = "NEUTRAL"
-                reason = (
-                    f"Funding tinggi ({funding * 100:+.3f}%), posisi long ramai rawan squeeze."
-                )
+                reason = f"Funding tinggi ({funding * 100:+.3f}%), posisi long ramai rawan squeeze."
                 strength = 0.0
         # Negative funding while price rising -> short squeeze potential
         elif funding < self.funding_negative and delta_price_pct > 0:

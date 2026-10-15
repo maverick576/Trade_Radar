@@ -118,9 +118,7 @@ class EmaRibbonIndicator:
         elif bear_pairs == 4 and last_close < e8:
             state = "BEAR"
             strength = float(np.clip((-spread) / (2.0 * last_atr), 0.0, 1.0))
-            reason = (
-                f"Ribbon turun sempurna, harga di bawah EMA8 (lebar {-spread_atr:.1f}x ATR)."
-            )
+            reason = f"Ribbon turun sempurna, harga di bawah EMA8 (lebar {-spread_atr:.1f}x ATR)."
         # Partial bullish alignment (all 4 consecutive pairs ordered, close inside)
         elif bull_pairs >= 4:
             state = "BULL"
