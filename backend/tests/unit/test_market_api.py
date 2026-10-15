@@ -144,3 +144,28 @@ async def test_get_candles(market_client: AsyncClient) -> None:
     assert candles[0]["tf"] == "M15"
     assert candles[0]["open"] == 81000.0
     assert candles[1]["close"] == 81280.0
+
+
+@pytest.mark.asyncio
+async def test_get_indicators_unauthorized() -> None:
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        res = await client.get("/api/indicators", params={"symbol": "BTCUSDT", "tf": "M15"})
+        assert res.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_get_indicators_endpoint(market_client: AsyncClient) -> None:
+    res = await market_client.get(
+        "/api/indicators",
+        params={"symbol": "BTCUSDT", "tf": "M15", "limit": 100},
+    )
+    assert res.status_code == 200
+    data = res.json()
+    assert data["symbol"] == "BTCUSDT"
+    assert data["tf"] == "M15"
+    assert "overlays" in data
+    assert "panes" in data
+    assert "latest_indicators" in data
+    assert "calc_time_ms" in data
+    assert isinstance(data["latest_indicators"], list)

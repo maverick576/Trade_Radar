@@ -34,25 +34,27 @@ async def test_stream_message_routing_kline_closed() -> None:
     connector.on_candle_closed = on_closed
 
     # Sample Binance futures kline closed event
-    kline_msg = json.dumps({
-        "stream": "btcusdt@kline_15m",
-        "data": {
-            "s": "BTCUSDT",
-            "k": {
-                "t": 1700000000000,
-                "T": 1700000899999,
+    kline_msg = json.dumps(
+        {
+            "stream": "btcusdt@kline_15m",
+            "data": {
                 "s": "BTCUSDT",
-                "i": "15m",
-                "o": "81000.00",
-                "c": "81200.50",
-                "h": "81300.00",
-                "l": "80950.00",
-                "v": "150.25",
-                "V": "80.10",  # Taker buy base asset volume
-                "x": True,     # Is closed
+                "k": {
+                    "t": 1700000000000,
+                    "T": 1700000899999,
+                    "s": "BTCUSDT",
+                    "i": "15m",
+                    "o": "81000.00",
+                    "c": "81200.50",
+                    "h": "81300.00",
+                    "l": "80950.00",
+                    "v": "150.25",
+                    "V": "80.10",  # Taker buy base asset volume
+                    "x": True,  # Is closed
+                },
             },
-        },
-    })
+        }
+    )
 
     await connector._process_stream_message(kline_msg)
 
@@ -79,13 +81,15 @@ async def test_stream_message_routing_depth() -> None:
 
     connector.on_depth = on_depth
 
-    depth_msg = json.dumps({
-        "stream": "btcusdt@depth20@500ms",
-        "data": {
-            "b": [["81200.00", "5.2"], ["81190.00", "3.1"]],
-            "a": [["81201.00", "4.0"], ["81205.00", "2.5"]],
-        },
-    })
+    depth_msg = json.dumps(
+        {
+            "stream": "btcusdt@depth20@500ms",
+            "data": {
+                "b": [["81200.00", "5.2"], ["81190.00", "3.1"]],
+                "a": [["81201.00", "4.0"], ["81205.00", "2.5"]],
+            },
+        }
+    )
 
     await connector._process_stream_message(depth_msg)
 

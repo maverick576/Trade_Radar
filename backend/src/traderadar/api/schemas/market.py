@@ -1,9 +1,11 @@
-"""Pydantic schemas for market data endpoints (/symbols, /candles)."""
+"""Pydantic schemas for market data endpoints (/symbols, /candles, /indicators)."""
 
 from datetime import datetime
 from typing import Any
 
 from pydantic import BaseModel, Field
+
+from traderadar.engine.indicators.base import IndicatorResult
 
 
 class CandleItem(BaseModel):
@@ -42,3 +44,14 @@ class SymbolsResponse(BaseModel):
     """List of active symbols."""
 
     symbols: list[SymbolItem]
+
+
+class IndicatorsResponse(BaseModel):
+    """Response containing overlay timeseries, subpanes, and latest indicator verdict."""
+
+    symbol: str
+    tf: str
+    overlays: dict[str, Any]
+    panes: dict[str, Any]
+    latest_indicators: list[IndicatorResult]
+    calc_time_ms: float

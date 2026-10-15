@@ -263,12 +263,15 @@ class MarketDataIngestor:
                 fng_items = await self.connector.poll_fear_and_greed(limit=5)
                 async with get_db_session() as session:
                     for item in fng_items:
-                        await insert_sentiment_snapshot(session, {
-                            "source": "alternative_me",
-                            "ts": item["ts"],
-                            "value": item["value"],
-                            "label": item["label"],
-                        })
+                        await insert_sentiment_snapshot(
+                            session,
+                            {
+                                "source": "alternative_me",
+                                "ts": item["ts"],
+                                "value": item["value"],
+                                "label": item["label"],
+                            },
+                        )
 
                 # 2. Derivatives for all futures symbols
                 for sym in self.all_futures_symbols:
@@ -291,14 +294,17 @@ class MarketDataIngestor:
                             funding_rate = m_dict.get("funding_rate")
 
                         async with get_db_session() as session:
-                            await insert_derivatives_snapshot(session, {
-                                "symbol": db_sym,
-                                "ts": oi_data["time"],
-                                "funding": funding_rate,
-                                "mark": mark_price,
-                                "open_interest": oi_data["open_interest"],
-                                "ls_ratio": ls_ratio,
-                            })
+                            await insert_derivatives_snapshot(
+                                session,
+                                {
+                                    "symbol": db_sym,
+                                    "ts": oi_data["time"],
+                                    "funding": funding_rate,
+                                    "mark": mark_price,
+                                    "open_interest": oi_data["open_interest"],
+                                    "ls_ratio": ls_ratio,
+                                },
+                            )
                     except Exception as der_err:
                         logger.warning(
                             "derivatives_poll_partial_error", symbol=sym, error=str(der_err)
@@ -355,6 +361,7 @@ class MarketDataIngestor:
 
             # If no ticks received for longer than threshold and market is open
             from traderadar.core.time import is_gold_market_open
+
             if is_gold_market_open(utc_now()) and elapsed > self.gold_manager.switch_after_seconds:
                 switched = await self.gold_manager.record_failure(
                     f"Tidak ada data tick Gold selama {int(elapsed)} detik"

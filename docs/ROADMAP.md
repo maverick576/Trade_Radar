@@ -31,9 +31,9 @@ Estimasi: ±14–18 sesi agent.
 - **Selesai bila:** harga di UI cocok dengan Binance (≤ 0,05%); putus internet 2 menit → tersambung lagi tanpa candle bolong; memblokir XAUUSDT (simulasi di test) → otomatis PAXG + banner.
 
 ## Fase 3 — 10 indikator
-- [ ] `engine/indicators/*` sesuai `SIGNAL_ENGINE.md` §3, perhitungan inkremental.
-- [ ] Unit test nilai referensi TradingView & anti-lookahead.
-- [ ] Overlay chart & pane RSI/CVD.
+- [x] `engine/indicators/*` sesuai `SIGNAL_ENGINE.md` §3, perhitungan inkremental.
+- [x] Unit test nilai referensi TradingView & anti-lookahead.
+- [x] Overlay chart & pane RSI/CVD.
 - **Selesai bila:** coverage `engine/indicators` ≥ 85%, nilai cocok ≤ 0,1%, durasi analisis < 300 ms/simbol/TF.
 
 ## Fase 4 — Skor, macro filter, Strategi B, panel Analisa

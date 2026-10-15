@@ -41,9 +41,9 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
                 return
 
     # Client subscription state
-    subscribed_symbols: set[str] = {
-        item.symbol.upper() for item in settings.app.watchlist
-    } | {"XAUUSD"}
+    subscribed_symbols: set[str] = {item.symbol.upper() for item in settings.app.watchlist} | {
+        "XAUUSD"
+    }
     subscribed_tfs: set[str] = {"M15", "H1", "H4", "D1"}
 
     redis_client = await get_redis()
@@ -52,15 +52,17 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
 
     # Send initial connected status message
     await websocket.send_text(
-        json.dumps({
-            "type": "status",
-            "data": {
-                "connected": True,
-                "symbols": list(subscribed_symbols),
-                "tfs": list(subscribed_tfs),
-                "server_time": to_iso_utc(utc_now()),
-            },
-        })
+        json.dumps(
+            {
+                "type": "status",
+                "data": {
+                    "connected": True,
+                    "symbols": list(subscribed_symbols),
+                    "tfs": list(subscribed_tfs),
+                    "server_time": to_iso_utc(utc_now()),
+                },
+            }
+        )
     )
 
     async def _redis_listener() -> None:
@@ -132,13 +134,15 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
                         tfs=list(subscribed_tfs),
                     )
                     await websocket.send_text(
-                        json.dumps({
-                            "type": "subscribed",
-                            "data": {
-                                "symbols": list(subscribed_symbols),
-                                "tfs": list(subscribed_tfs),
-                            },
-                        })
+                        json.dumps(
+                            {
+                                "type": "subscribed",
+                                "data": {
+                                    "symbols": list(subscribed_symbols),
+                                    "tfs": list(subscribed_tfs),
+                                },
+                            }
+                        )
                     )
             except Exception as e:
                 logger.warning("ws_command_error", error=str(e))

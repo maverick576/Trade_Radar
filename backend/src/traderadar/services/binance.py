@@ -58,21 +58,15 @@ class BinanceConnector:
         self._reconnect_interval_seconds = 23 * 3600  # 23 hours
 
         # Callbacks
-        self.on_candle_closed: (
-            Callable[[dict[str, Any]], Coroutine[Any, Any, None]] | None
-        ) = None
-        self.on_live_bar: (
-            Callable[[str, str, dict[str, Any]], Coroutine[Any, Any, None]] | None
-        ) = None
-        self.on_tick: (
-            Callable[[str, float, datetime], Coroutine[Any, Any, None]] | None
-        ) = None
+        self.on_candle_closed: Callable[[dict[str, Any]], Coroutine[Any, Any, None]] | None = None
+        self.on_live_bar: Callable[[str, str, dict[str, Any]], Coroutine[Any, Any, None]] | None = (
+            None
+        )
+        self.on_tick: Callable[[str, float, datetime], Coroutine[Any, Any, None]] | None = None
         self.on_depth: (
             Callable[[str, list[list[float]], list[list[float]]], Coroutine[Any, Any, None]] | None
         ) = None
-        self.on_mark_price: (
-            Callable[[str, float, float], Coroutine[Any, Any, None]] | None
-        ) = None
+        self.on_mark_price: Callable[[str, float, float], Coroutine[Any, Any, None]] | None = None
 
         # Transparent DNS patch for local network / Indonesian ISP poisoning
         enable_dns_fallback_patch()
@@ -159,19 +153,21 @@ class BinanceConnector:
             close_time = datetime.fromtimestamp(close_ms / 1000.0, tz=UTC)
             taker_buy_vol = float(raw[9]) if len(raw) > 9 and raw[9] is not None else None
 
-            candles.append({
-                "symbol": symbol.upper(),
-                "tf": INTERVAL_TO_TF.get(interval, interval),
-                "open_time": open_time,
-                "close_time": close_time,
-                "open": float(raw[1]),
-                "high": float(raw[2]),
-                "low": float(raw[3]),
-                "close": float(raw[4]),
-                "volume": float(raw[5]),
-                "taker_buy_volume": taker_buy_vol,
-                "source": "binance_futures" if is_futures else "binance_spot",
-            })
+            candles.append(
+                {
+                    "symbol": symbol.upper(),
+                    "tf": INTERVAL_TO_TF.get(interval, interval),
+                    "open_time": open_time,
+                    "close_time": close_time,
+                    "open": float(raw[1]),
+                    "high": float(raw[2]),
+                    "low": float(raw[3]),
+                    "close": float(raw[4]),
+                    "volume": float(raw[5]),
+                    "taker_buy_volume": taker_buy_vol,
+                    "source": "binance_futures" if is_futures else "binance_spot",
+                }
+            )
 
         return candles
 
@@ -250,11 +246,13 @@ class BinanceConnector:
             results = []
             for item in items:
                 ts = datetime.fromtimestamp(int(item["timestamp"]), tz=UTC)
-                results.append({
-                    "value": float(item["value"]),
-                    "label": item.get("value_classification", ""),
-                    "ts": ts,
-                })
+                results.append(
+                    {
+                        "value": float(item["value"]),
+                        "label": item.get("value_classification", ""),
+                        "ts": ts,
+                    }
+                )
             return results
 
     async def build_stream_url(

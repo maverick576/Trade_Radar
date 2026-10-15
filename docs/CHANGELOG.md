@@ -3,6 +3,49 @@
 Semua perubahan penting pada TradeRadar didokumentasikan di file ini.
 Format mengikuti panduan [Keep a Changelog](https://keepachangelog.com/id/1.0.0/).
 
+## [Fase 3: 10 Indikator] - 2026-10-15
+
+### Ditambahkan
+- **Engine Indikator Deterministik (`traderadar.engine.indicators`):**
+  - Implementasi 10 indikator teknikal sesuai spesifikasi `docs/SIGNAL_ENGINE.md` §3 dengan type hints penuh (`mypy --strict`) dan zero lookahead bias:
+    1. **VWAP Session (`vwap.py`):** Reset harian 00:00 UTC, deviasi standar berbobot volume (±1σ, ±2σ), z-score jarak harga, slope regresi 4-bar, dan penalti mean-reversion bila overextended (|z| > 2).
+    2. **EMA Ribbon (`ema_ribbon.py`):** 5 EMA (8, 13, 21, 34, 55), normalisasi jarak terhadap Wilder ATR 14, deteksi ribbon penuh vs parsial, serta deteksi counter-trend pullbacks.
+    3. **Supertrend (`supertrend.py`):** Wilder ATR 10, multiplier 3.0, source (H+L)/2, pelacakan flip arah, dan penalti jarak sempit (< 0.3 ATR).
+    4. **RSI (`rsi.py`):** Wilder RSI 14, deteksi pivot berkonfirmasi anti-lookahead (`left=5, right=3`, hanya dikenali pada candle t-3), divergensi reguler bull/bear, crossover level 50, dan deteksi overbought (>70) / oversold (<30).
+    5. **Bollinger Bands (`bollinger.py`):** SMA 20, 2σ, %B, Bandwidth, deteksi squeeze persentil 20 (historis 120 bar), breakout pasca-squeeze, serta trend bounce di upper/lower band.
+    6. **CVD / OBV (`cvd_obv.py`):** Akumulasi delta volume taker beli/jual kontinu, reset visual sesi harian 00:00 UTC, fallback ke OBV jika data taker volume tidak tersedia, slope regresi 20-bar dinormalisasi std 100-bar, dan deteksi divergensi/absorpsi volume.
+    7. **Funding Rate & Open Interest Matrix (`funding_oi.py`):** Evaluasi 4 kuadran matriks perubahan harga 4-jam (ΔP%) vs open interest (ΔOI%), penalti crowded long funding rate (> +0.05%), dan bonus short squeeze funding negatif (< -0.03%).
+    8. **Orderbook Imbalance (`orderbook.py`):** Analisis ketidakseimbangan bid/ask depth volume pada rentang ±0.5% dari mid price dengan flag `live_only=True` dan fallback gracefully jika offline.
+    9. **LightGBM Directional Classifier Model (`lightgbm.py`):** Kompatibilitas model inference prediksi probabilitas arah triple-barrier (p_up, p_down) dengan margin threshold ≥ 0.15 dan probabilitas minimum ≥ 0.58, serta validasi metrik OOS AUC ≥ 0.55 sebelum aktif.
+    10. **Sentiment Index (`sentiment.py`):** Agregasi Fear & Greed kontrarian (Crypto) dan rasio akun Long/Short (Crypto & Gold) dengan penalti crowded positioning.
+  - Modul koordinasi `traderadar.engine.calculator.IndicatorEngine`: evaluasi vectorized seluruh 10 indikator secara terintegrasi dengan waktu eksekusi ~2–5 ms per 1.000 candle (jauh di bawah batas toleransi SLA < 300 ms).
+  - Serializer timeseries overlay chart (VWAP bands, EMA Ribbon, Supertrend, Bollinger Bands) dan sub-panes (RSI, CVD) untuk konsumsi frontend.
+- **Validasi Paritas TradingView & Anti-Lookahead:**
+  - Fixture candle real dari Binance Futures: `ethusdt_m15_2000.csv` dan `xauusdt_m15_2000.csv` (2.000 candle M15).
+  - Reference benchmark values `backend/tests/fixtures/reference_values.json` dari TradingView dengan toleransi perbedaan ≤ 0.1%.
+  - Pengujian invarian anti-lookahead (`df[:t]` vs `df[:t+50]`): nilai indikator pada candle t terbukti 100% identik tanpa kebocoran data masa depan.
+- **REST API Endpoint (`backend/src/traderadar/api/routers/market.py`):**
+  - Endpoint `GET /api/indicators?symbol=...&tf=...&limit=...`: menyajikan hasil perhitungan terkini 10 indikator, skor per kategori (Trend, Momentum, Volume, Orderflow, Stat), status validitas, alasan dalam Bahasa Indonesia, serta payload timeseries multi-pane chart.
+- **Frontend TradingView Multi-Series Overlay & Sub-Panes (`frontend/`):**
+  - Multi-series overlays pada `TradingViewChart`:
+    - Garis VWAP dan pita deviasi ±1σ, ±2σ.
+    - EMA Ribbon 5 garis (8, 13, 21, 34, 55) dengan gradien warna biru-keunguan.
+    - Supertrend line dengan pewarnaan dinamis bullish (hijau) / bearish (merah).
+    - Bollinger Bands (Upper, Middle, Lower).
+    - Tombol toggle interaktif untuk menampilkan/menyembunyikan masing-masing overlay.
+  - Sub-panes tersinkronisasi:
+    - RSI Pane: garis RSI dengan garis referensi overbought (70), midpoint (50), dan oversold (30).
+    - CVD Pane: garis delta volume kumulatif dengan histogram delta per bar.
+  - Kartu Analisis 10 Indikator di `AnalisaPage`:
+    - Grid visual 10 indikator dengan badge status (BULLISH, BEARISH, NEUTRAL, SQUEEZE, CROWDED, OVERBOUGHT, OVERSOLD).
+    - Visual bar kekuatan indikator (0–100%).
+    - Tooltip deskripsi matematis & alasan kondisi sinyal dalam Bahasa Indonesia.
+- **Pengujian & Metrik Kualitas:**
+  - 70 pengujian unit & integrasi backend lulus 100% (26 tes indikator mendalam, tes paritas TradingView, tes anti-lookahead, tes performa benchmark).
+  - Test coverage pada package `traderadar.engine.indicators` mencapai 100% (melampaui target minimum 85%).
+  - Mypy Strict dan Ruff linter lulus tanpa peringatan atau error di seluruh 61 file backend.
+  - Frontend TypeScript compiler dan ESLint lulus 100% tanpa error, zero `any`.
+
 ## [Fase 2: Data Market Real (Binance, Gold, Fallback)] - 2026-10-15
 
 ### Ditambahkan

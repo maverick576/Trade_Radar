@@ -31,9 +31,7 @@ async def run_migrations() -> None:
         if example_yaml.exists() and not active_yaml.exists():
             try:
                 shutil.copyfile(example_yaml, active_yaml)
-                logger.info(
-                    "copied_settings_example", src=str(example_yaml), dest=str(active_yaml)
-                )
+                logger.info("copied_settings_example", src=str(example_yaml), dest=str(active_yaml))
             except Exception as e:
                 logger.warning("could_not_copy_settings", error=str(e))
 
@@ -64,9 +62,7 @@ async def run_migrations() -> None:
         alembic_cfg = Config(str(alembic_ini_path))
         # Ensure script_location is absolute or correct relative to alembic.ini
         if not alembic_cfg.get_main_option("script_location"):
-            alembic_cfg.set_main_option(
-                "script_location", str(alembic_ini_path.parent / "alembic")
-            )
+            alembic_cfg.set_main_option("script_location", str(alembic_ini_path.parent / "alembic"))
         await asyncio.to_thread(command.upgrade, alembic_cfg, "head")
         logger.info("alembic_upgrade_completed")
     except Exception as exc:

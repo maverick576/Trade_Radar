@@ -48,10 +48,7 @@ async def upsert_candles(session: AsyncSession, candles_data: list[dict[str, Any
     if not candles_data:
         return 0
 
-    clean_data = [
-        {k: v for k, v in item.items() if k in CANDLE_COLUMNS}
-        for item in candles_data
-    ]
+    clean_data = [{k: v for k, v in item.items() if k in CANDLE_COLUMNS} for item in candles_data]
 
     bind = session.bind
     is_postgres = bind is not None and bind.dialect.name == "postgresql"
@@ -88,9 +85,7 @@ async def upsert_candles(session: AsyncSession, candles_data: list[dict[str, Any
     return len(clean_data)
 
 
-async def get_latest_candle(
-    session: AsyncSession, symbol: str, tf: str
-) -> Candle | None:
+async def get_latest_candle(session: AsyncSession, symbol: str, tf: str) -> Candle | None:
     """Retrieve the most recent closed candle for symbol and tf."""
     stmt = (
         select(Candle)
@@ -124,9 +119,7 @@ async def get_candles(
     return rows
 
 
-async def insert_derivatives_snapshot(
-    session: AsyncSession, snapshot_data: dict[str, Any]
-) -> None:
+async def insert_derivatives_snapshot(session: AsyncSession, snapshot_data: dict[str, Any]) -> None:
     """Insert snapshot of funding, mark, OI, and LS ratio."""
     clean_data = {k: v for k, v in snapshot_data.items() if k in DERIVATIVES_COLUMNS}
     bind = session.bind
@@ -150,9 +143,7 @@ async def insert_derivatives_snapshot(
     await session.commit()
 
 
-async def insert_sentiment_snapshot(
-    session: AsyncSession, sentiment_data: dict[str, Any]
-) -> None:
+async def insert_sentiment_snapshot(session: AsyncSession, sentiment_data: dict[str, Any]) -> None:
     """Insert sentiment snapshot (Fear & Greed index)."""
     clean_data = {k: v for k, v in sentiment_data.items() if k in SENTIMENT_COLUMNS}
     bind = session.bind

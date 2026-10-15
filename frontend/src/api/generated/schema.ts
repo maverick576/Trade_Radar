@@ -284,6 +284,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/indicators": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Indicators Endpoint
+         * @description Calculate overlays (VWAP, EMA Ribbon, Supertrend, Bollinger) and panes (RSI, CVD).
+         */
+        get: operations["get_indicators_endpoint_api_indicators_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -366,6 +386,58 @@ export interface components {
             version: string;
             /** Time */
             time: string;
+        };
+        /**
+         * IndicatorResult
+         * @description Standard output schema of an indicator evaluation.
+         */
+        IndicatorResult: {
+            /** Key */
+            key: string;
+            /**
+             * Category
+             * @enum {string}
+             */
+            category: "trend" | "momentum" | "order_flow" | "derivatives" | "microstructure" | "ml" | "sentiment";
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "BULL" | "BEAR" | "NEUTRAL" | "NA";
+            /**
+             * Strength
+             * @default 0
+             */
+            strength: number;
+            /** Values */
+            values?: {
+                [key: string]: number;
+            };
+            /** Reason */
+            reason: string;
+            /**
+             * Live Only
+             * @default false
+             */
+            live_only: boolean;
+        };
+        /**
+         * IndicatorsResponse
+         * @description Response containing overlay timeseries, subpanes, and latest indicator verdict.
+         */
+        IndicatorsResponse: {
+            /** Symbol */
+            symbol: string;
+            /** Tf */
+            tf: string;
+            /** Overlays */
+            overlays: Record<string, never>;
+            /** Panes */
+            panes: Record<string, never>;
+            /** Latest Indicators */
+            latest_indicators: components["schemas"]["IndicatorResult"][];
+            /** Calc Time Ms */
+            calc_time_ms: number;
         };
         /**
          * InfrastructureHealth
@@ -954,6 +1026,46 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CandleItem"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_indicators_endpoint_api_indicators_get: {
+        parameters: {
+            query: {
+                /** @description Market symbol e.g. BTCUSDT or XAUUSD */
+                symbol: string;
+                /** @description Timeframe e.g. M15, H1, H4, D1 */
+                tf?: string;
+                /** @description Max candle history for indicators */
+                limit?: number;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: {
+                access_token?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IndicatorsResponse"];
                 };
             };
             /** @description Validation Error */

@@ -83,6 +83,10 @@ warn_return_any = true
 no_implicit_reexport = true
 plugins = ["pydantic.mypy"]
 
+[[tool.mypy.overrides]]
+module = "pandas"
+ignore_missing_imports = true
+
 [dependency-groups]
 dev = [
     "aiosqlite>=0.20.0",

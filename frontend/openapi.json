@@ -899,6 +899,109 @@
           }
         }
       }
+    },
+    "/api/indicators": {
+      "get": {
+        "tags": [
+          "Market Data"
+        ],
+        "summary": "Get Indicators Endpoint",
+        "description": "Calculate overlays (VWAP, EMA Ribbon, Supertrend, Bollinger) and panes (RSI, CVD).",
+        "operationId": "get_indicators_endpoint_api_indicators_get",
+        "parameters": [
+          {
+            "name": "symbol",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Market symbol e.g. BTCUSDT or XAUUSD",
+              "title": "Symbol"
+            },
+            "description": "Market symbol e.g. BTCUSDT or XAUUSD"
+          },
+          {
+            "name": "tf",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Timeframe e.g. M15, H1, H4, D1",
+              "default": "M15",
+              "title": "Tf"
+            },
+            "description": "Timeframe e.g. M15, H1, H4, D1"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000,
+              "minimum": 20,
+              "description": "Max candle history for indicators",
+              "default": 300,
+              "title": "Limit"
+            },
+            "description": "Max candle history for indicators"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IndicatorsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1065,6 +1168,111 @@
         ],
         "title": "HealthResponse",
         "description": "Liveness probe response."
+      },
+      "IndicatorResult": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "trend",
+              "momentum",
+              "order_flow",
+              "derivatives",
+              "microstructure",
+              "ml",
+              "sentiment"
+            ],
+            "title": "Category"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "BULL",
+              "BEAR",
+              "NEUTRAL",
+              "NA"
+            ],
+            "title": "State"
+          },
+          "strength": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Strength",
+            "default": 0.0
+          },
+          "values": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Values"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          },
+          "live_only": {
+            "type": "boolean",
+            "title": "Live Only",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "category",
+          "state",
+          "reason"
+        ],
+        "title": "IndicatorResult",
+        "description": "Standard output schema of an indicator evaluation."
+      },
+      "IndicatorsResponse": {
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "title": "Symbol"
+          },
+          "tf": {
+            "type": "string",
+            "title": "Tf"
+          },
+          "overlays": {
+            "type": "object",
+            "title": "Overlays"
+          },
+          "panes": {
+            "type": "object",
+            "title": "Panes"
+          },
+          "latest_indicators": {
+            "items": {
+              "$ref": "#/components/schemas/IndicatorResult"
+            },
+            "type": "array",
+            "title": "Latest Indicators"
+          },
+          "calc_time_ms": {
+            "type": "number",
+            "title": "Calc Time Ms"
+          }
+        },
+        "type": "object",
+        "required": [
+          "symbol",
+          "tf",
+          "overlays",
+          "panes",
+          "latest_indicators",
+          "calc_time_ms"
+        ],
+        "title": "IndicatorsResponse",
+        "description": "Response containing overlay timeseries, subpanes, and latest indicator verdict."
       },
       "InfrastructureHealth": {
         "properties": {

@@ -7,7 +7,12 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from traderadar.api.deps import get_current_user, get_db, get_redis_client
-from traderadar.api.schemas.market import CandleItem, SymbolItem, SymbolsResponse
+from traderadar.api.schemas.market import (
+    CandleItem,
+    IndicatorsResponse,
+    SymbolItem,
+    SymbolsResponse,
+)
 from traderadar.core.config import get_settings
 from traderadar.core.models import User
 from traderadar.core.time import get_gold_market_status
@@ -33,9 +38,7 @@ async def get_symbols(
         asset = item.asset
         is_gold = asset == "gold"
 
-        active_source = (
-            gold_manager.active_source if is_gold else f"binance_futures:{sym}"
-        )
+        active_source = gold_manager.active_source if is_gold else f"binance_futures:{sym}"
         is_fallback = gold_manager.is_fallback if is_gold else False
 
         # Live price from Redis with graceful fallback
@@ -138,6 +141,7 @@ async def get_candles_endpoint(
             live_dict = json.loads(live_raw)
             # Only append if newer than latest closed candle
             from datetime import datetime
+
             open_dt = datetime.fromisoformat(live_dict["open_time"])
             if not candles or open_dt >= candles[-1].open_time:
                 if candles and open_dt == candles[-1].open_time:
@@ -175,3 +179,84 @@ async def get_candles_endpoint(
             pass
 
     return candles
+
+
+@router.get("/indicators", response_model=IndicatorsResponse)
+async def get_indicators_endpoint(
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+    redis_client: Annotated[Any, Depends(get_redis_client)],
+    symbol: Annotated[str, Query(description="Market symbol e.g. BTCUSDT or XAUUSD")],
+    tf: Annotated[str, Query(description="Timeframe e.g. M15, H1, H4, D1")] = "M15",
+    limit: Annotated[
+        int, Query(ge=20, le=1000, description="Max candle history for indicators")
+    ] = 300,
+) -> IndicatorsResponse:
+    """Calculate overlays (VWAP, EMA Ribbon, Supertrend, Bollinger) and panes (RSI, CVD)."""
+    import pandas as pd
+
+    from traderadar.engine.calculator import IndicatorEngine
+    from traderadar.engine.indicators.base import MarketContext
+
+    sym_upper = symbol.upper()
+    tf_upper = tf.upper()
+
+    db_rows = await get_candles(db, sym_upper, tf_upper, limit=limit)
+    if not db_rows:
+        return IndicatorsResponse(
+            symbol=sym_upper,
+            tf=tf_upper,
+            overlays={},
+            panes={},
+            latest_indicators=[],
+            calc_time_ms=0.0,
+        )
+
+    # Build DataFrame
+    records = [
+        {
+            "open_time": row.open_time,
+            "open": row.open,
+            "high": row.high,
+            "low": row.low,
+            "close": row.close,
+            "volume": row.volume,
+            "taker_buy_volume": row.taker_buy_volume,
+        }
+        for row in db_rows
+    ]
+    df = pd.DataFrame(records)
+
+    # Assemble MarketContext from Redis cache
+    is_gold = "XAU" in sym_upper or "GOLD" in sym_upper
+    context = MarketContext(is_gold=is_gold)
+
+    try:
+        # Check derivatives snapshot from Redis
+        deriv_raw = await redis_client.get(f"derivatives:{sym_upper}")
+        if deriv_raw:
+            d_dict = json.loads(deriv_raw)
+            context.funding_rate = d_dict.get("funding")
+            context.open_interest_current = d_dict.get("open_interest")
+            context.open_interest_4h_ago = d_dict.get("open_interest_4h_ago")
+            context.long_short_ratio = d_dict.get("ls_ratio")
+
+        # Check sentiment from Redis
+        fng_val = await redis_client.get("sentiment:fng")
+        if fng_val:
+            context.fear_and_greed = int(fng_val)
+    except Exception:
+        pass
+
+    engine = IndicatorEngine()
+    chart_data = engine.generate_chart_overlays_and_panes(df, limit=limit)
+    results, elapsed_ms = engine.evaluate_all(df, context=context)
+
+    return IndicatorsResponse(
+        symbol=sym_upper,
+        tf=tf_upper,
+        overlays=chart_data["overlays"],
+        panes=chart_data["panes"],
+        latest_indicators=results,
+        calc_time_ms=round(elapsed_ms, 2),
+    )
